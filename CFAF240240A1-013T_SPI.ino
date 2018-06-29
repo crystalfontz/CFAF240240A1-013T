@@ -59,32 +59,23 @@
 //============================================================================
 void setup()
 {
-  // LCD SPI & control lines
-  //   ARD   | Port | LCD                      | wire
-  // --------+------+--------------------------+------------
-  //  #5/D5  |  PD5 | SYNC_PIN_SLAVE  (optional -- generally not used)
-  //  #6/D6  |  PD6 | SYNC_PIN_MASTER (optional -- generally not used)
-  //  #7/D7  |  PD7 | SD_CS                    | Purple
-  //  #8/D8  |  PB0 | LCD_RS                   | Yellow
-  //  #9/D9  |  PB1 | LCD_RESET                | Purple
-  // #10/D10 |  PB2 | LCD_CS_NOT (or SPI SS)   | Grey
-  // #11/D11 |  PB3 | LCD_MOSI (hardware SPI)  | Green 
-  // #12/D12 |  PB4 | not used (would be MISO) | Blue
-  // #13/D13 |  PB5 | LCD_SCK (hardware SPI)   | White
-  //==========================================================================
   //Set up port B as ALL inputs
-  pinMode(LCD_RS, OUTPUT);
-  pinMode(LCD_RESET, OUTPUT);
-  pinMode(LCD_CS, OUTPUT);
-  pinMode(LCD_MOSI, OUTPUT);
-  pinMode(LCD_SCK, OUTPUT);
-  pinMode(uSD_CS, OUTPUT);
-  //DDRB = 0x3F;
+  pinMode(3, OUTPUT);   //LCD_EN
+  //pinMode(5, INPUT);   //LCD_TE
+  pinMode(6, OUTPUT);   //LCD_IM3
+  pinMode(7, OUTPUT);   //uSD_CS
+  
+  //CLR_IM3; //SDI/SDO share MISO
+  SET_IM3;  //SDI/SDO on different pins
+
+  pinMode(8, OUTPUT);   //LCD_RS
+  pinMode(9, OUTPUT);   //LCD_RESET
+  pinMode(10, OUTPUT);  //LCD_CS
   
   //Drive the ports to a reasonable starting state.
   CLR_RESET;  //Active low
   SET_CS;     //Active low
-  CLR_RS;     //
+  CLR_RS;
   CLR_MOSI;
   CLR_SCK;
 
@@ -111,14 +102,6 @@ void setup()
   //
   // That appears to make the SD library talk at 8MHz.
   //
-    //Pin 7 is used for the SD card CS.
-  //pinMode(7, OUTPUT);
-
-  // Initialize SPI. By default the clock is 4MHz. The chip is good to 10 MHz
-  SPI.begin();
-  //Bump the clock to 8MHz. Appears to be the maximum.
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
-
 
   if (!SD.begin(7))
     {
@@ -131,6 +114,9 @@ void setup()
     Serial.println("Card initialized.");
     }
 
+  //Bump the clock to 8MHz. Appears to be the maximum.
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+
   //Initialize the LCD controller
   displayInit();
 }
@@ -139,6 +125,18 @@ void loop()
 {
   Serial.println("Writing a white screen");
   fillScreen(WHITE);
+  delay(500);
+
+  Serial.println("Writing a red screen");
+  fillScreen(RED);
+  delay(500);
+
+  Serial.println("Writing a green screen");
+  fillScreen(GREEN);
+  delay(500);
+
+  Serial.println("Writing a blue screen");
+  fillScreen(BLUE);
   delay(500);
 
   Fill_OLED_Gamma_Gradient(240, 240);

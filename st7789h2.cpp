@@ -43,7 +43,9 @@ void displayInit(void)
   //-----------------------------Display setting--------------------------------
   SPI_sendCommand(ST7789_MADCTL); //Page 215
   //SPI_sendData(0x00); //DEFAULT
-  SPI_sendData(0x48);
+  //SPI_sendData(0x48); //TEST
+  SPI_sendData(0x40);
+  
   // Bit D7- Page Address Order
   // “0” = Top to Bottom (When MADCTL D7=”0”).
   // “1” = Bottom to Top (When MADCTL D7=”1”).
@@ -64,9 +66,9 @@ void displayInit(void)
   // “0” = LCD Refresh Left to Right (When MADCTL D2=”0”)
   // “1” = LCD Refresh Right to Left (When MADCTL D2=”1”)  
   //Address control 
-  SPI_sendCommand(ST7789_COLMOD); //Interface pixel format
+  SPI_sendCommand(ST7789_COLMOD); //Interface pixel format Pg 224
   SPI_sendData(0x06);
-
+  
   //SPI_sendCommand(ST7789_INVOFF);
   SPI_sendCommand(ST7789_INVON);
 

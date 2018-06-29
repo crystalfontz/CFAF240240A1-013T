@@ -169,28 +169,43 @@ void pictureSlideShow()
 // optimized to do index operations during SPI transfers.
 void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
 {
-  uint8_t subpixel;
-    
+  pixel_t pixel;
+
   // Select the LCD's data register
   SET_RS;
   // Select the LCD controller
   CLR_CS;
 
-  //Load the first byte
-  subpixel=*data_ptr;
-  
   while(byte_count)
   {
-    //Send the byte out.
-    SPDR = subpixel;
-    //do something that can happen while transmitting
-    data_ptr++; //point to next byte
-    //Load the next byte
-    subpixel=*data_ptr;
+    //Load the byte
+    pixel.b=*data_ptr++;
+    pixel.g=*data_ptr++;
+    pixel.r=*data_ptr++;
+    
+    //Send the R byte out.
+    SPDR = pixel.r;
+
     //count this byte
     byte_count--;
     //Now that we have done all we can do, wait for the transfer to finish.
-    while (!(SPSR & _BV(SPIF))) ;
+    while (!(SPSR & _BV(SPIF)));
+
+    //Send the G out.
+    SPDR = pixel.g;
+
+    //count this byte
+    byte_count--;
+    //Now that we have done all we can do, wait for the transfer to finish.
+    while (!(SPSR & _BV(SPIF)));
+    
+    //Send the B out.
+    SPDR = pixel.b;
+
+    //count this byte
+    byte_count--;
+    //Now that we have done all we can do, wait for the transfer to finish.
+    while (!(SPSR & _BV(SPIF)));
   }
 
   //Needs some non-trivial delay here. Not sure why.
@@ -201,16 +216,8 @@ void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
 
 void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
   {
-  uint8_t
-    r;
-  uint8_t
-    g;
-  uint8_t
-    b;
-  uint8_t
-    first_half;
-  uint8_t
-    second_half;
+  pixel_t pixel;
+  uint8_t first_half, second_half;
 
   // Select the OLED's data register
   SET_RS;
@@ -218,39 +225,39 @@ void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
   CLR_CS;
 
   //Load the first pixel. BMPs BGR format
-  b=*data_ptr;
+  pixel.b=*data_ptr;
   data_ptr++;
-  g=*data_ptr;
+  pixel.g=*data_ptr;
   data_ptr++;
-  r=*data_ptr;
+  pixel.r=*data_ptr;
   data_ptr++;
 
   //The display takes two bytes (565) RRRRR GGGGGG BBBBB 
   //to show one pixel.
-  first_half=(r&0xF8) | (g >> 5);
-  second_half=((g << 3)&0xE0) | (b >> 3);
+  first_half=(pixel.r&0xF8) | (pixel.g >> 5);
+  second_half=((pixel.g << 3)&0xE0) | (pixel.b >> 3);
 
   while(pixel_count)
     {
     //Send the first half of this pixel out
     SPDR = first_half;
     //Load the next pixel while that is transmitting
-    b=*data_ptr;
+    pixel.b=*data_ptr;
     data_ptr++;
-    g=*data_ptr;
+    pixel.g=*data_ptr;
     data_ptr++;
-    r=*data_ptr;
+    pixel.r=*data_ptr;
     data_ptr++;
     //Calculate the next first half while that is transmitting
     // ~1.9368us -0.1256 us = 1.8112uS
-    first_half=(r&0xF8) | (g >> 5);
+    first_half=(pixel.r&0xF8) | (pixel.g >> 5);
     //At 8MHz SPI clock, the transfer is done by now, so we
     //do not need this:
     // while (!(SPSR & _BV(SPIF))) ;
     //Send the second half of the this pixel out
     SPDR = second_half;
     //Calculate the next second half
-    second_half=((g << 3)&0xE0) | (b >> 3);
+    second_half=((pixel.g << 3)&0xE0) | (pixel.b >> 3);
     //Done with this pixel
     pixel_count--;
     //At 8MHz SPI clock, the transfer is done by now, so we
