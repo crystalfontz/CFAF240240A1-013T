@@ -53,24 +53,45 @@
 // C:\Program Files (x86)\Arduino\libraries\SD\src\SD.cpp
 // C:\Program Files (x86)\Arduino\libraries\SD\src\SD.h
 
-#include "atmega328.h"
+#include "atsamd21g18.h"
 #include "st7789h2.h"
 
 //============================================================================
 void setup()
 {
+  //debug console
+  Serial.begin(9600);
+  Serial.println("setup()");
+
+  // Pin tests
+  //  Do I have control on the pins?
+  //    REG_PORT_OUTSET0 for PORTA
+  //    REG_PORT_OUTSET1 for PORTB
+  // TE PASSED, IM3
+  //REG_PORT_DIRSET1 = LCD_TE; //TE
+  
+  // while(1)
+  // {
+  //   Serial.println("Setting Pin");
+  //   SET_IM3;
+  //   delay(500); // delay for 1 second
+  //   Serial.println("Clearing Pin");
+  //   CLR_IM3;
+  //   delay(500); // delay for 1 second
+  // }
+
   //Set up port B as ALL inputs
-  pinMode(3, OUTPUT);   //LCD_EN
+  //pinMode(3, OUTPUT);   //LCD_EN TIED to GND
   //pinMode(5, INPUT);   //LCD_TE
-  pinMode(6, OUTPUT);   //LCD_IM3
-  pinMode(7, OUTPUT);   //uSD_CS
+  REG_PORT_DIRSET1 = LCD_IM3;   //LCD_IM3
+  REG_PORT_DIRSET0 = uSD_CS;;   //uSD_CS
   
   //CLR_IM3; //SDI/SDO share MISO
   SET_IM3;  //SDI/SDO on different pins
 
-  pinMode(8, OUTPUT);   //LCD_RS
-  pinMode(9, OUTPUT);   //LCD_RESET
-  pinMode(10, OUTPUT);  //LCD_CS
+  REG_PORT_DIRSET1 = LCD_RS;   //LCD_RS
+  REG_PORT_DIRSET0 = LCD_RESET;   //LCD_RESET
+  REG_PORT_DIRSET0 = LCD_CS;;  //LCD_CS
   
   //Drive the ports to a reasonable starting state.
   CLR_RESET;  //Active low
@@ -78,10 +99,6 @@ void setup()
   CLR_RS;
   CLR_MOSI;
   CLR_SCK;
-
-  //debug console
-  Serial.begin(9600);
-  Serial.println("setup()");
 
   // For the Seeduino I am using, the default speed of SPI_HALF_SPEED
   // set in C:\Program Files (x86)\Arduino\libraries\SD\src\SD.cpp

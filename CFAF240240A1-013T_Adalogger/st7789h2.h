@@ -9,7 +9,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
-#include "atmega328.h"
+#include "atsamd21g18.h"
 
 // color definitions
 #define	BLACK   0x000000

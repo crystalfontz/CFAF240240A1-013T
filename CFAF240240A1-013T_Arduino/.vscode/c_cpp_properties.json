@@ -3,6 +3,7 @@
         {
             "name": "Win32",
             "includePath": [
+                "C:\\Users\\max\\AppData\\Local\\Arduino15\\packages\\adafruit\\hardware\\samd\\1.2.1\\cores\\arduino",
                 "C:/Users/max/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.6.20/cores/arduino",
                 "${workspaceRoot}"
             ],
@@ -10,8 +11,9 @@
                 "SD_ENABLED"
             ],
             "browse": {
-                "limitSymbolsToIncludedHeaders": true,
+                "limitSymbolsToIncludedHeaders": false,
                 "path": [
+                    "C:\\Users\\max\\AppData\\Local\\Arduino15\\packages\\adafruit\\hardware\\samd\\1.2.1\\cores\\arduino",
                     "C:/Users/max/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.6.20/cores/arduino",
                     "${workspaceRoot}",
                     "C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/SPI/src",

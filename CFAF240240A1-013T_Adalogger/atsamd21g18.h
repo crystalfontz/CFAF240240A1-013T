@@ -38,39 +38,40 @@ class pixel_t
 // #12/D12 |  PB4 | not used (would be MISO) | Blue
 // #13/D13 |  PB5 | LCD_SCK (hardware SPI)   | White
 // ----+--------+-----
-//#define LCD_EN    0x08
-//#define LCD_TE    0x20  
-#define LCD_IM3   0x40  
-#define uSD_CS    0x80 // Pin 7
+//#define LCD_EN    0x08  // Currently tied to GND
+#define	LCD_RESET	PORT_PA04
+#define	LCD_CS	  PORT_PA05
+#define uSD_CS    PORT_PA08
+#define LCD_MISO  PORT_PA12
 // ----+--------+-----
-#define LCD_RS    0x01
-#define	LCD_RESET	0x02
-#define	LCD_CS	  0x04
-#define LCD_MOSI  0x08
-#define LCD_MISO  0x10
-#define LCD_SCK   0x20
-// ----+--------+-----
-// #define CLR_EN    (PORTD &= ~(LCD_EN))
+#define LCD_RS    PORT_PB02
+#define LCD_TE    PORT_PB08  
+#define LCD_IM3   PORT_PB09
+#define LCD_MOSI  PORT_PB10
+#define LCD_SCK   PORT_PB11
+// #define CLR_EN    (REG_PORT_OUT0 &= ~(LCD_EN))
 // #define SET_EN    (PORTD |=  (LCD_EN))
-// #define CLR_TE    (PORTD &= ~(LCD_TE))
-// #define SET_TE    (PORTD |=  (LCD_TE))
-#define CLR_IM3   (PORTD &= ~(LCD_IM3))
-#define SET_IM3   (PORTD |=  (LCD_IM3))
-#define CLR_uCS   (PORTD &= ~(uSD_CS))
-#define SET_uCS   (PORTD |=  (uSD_CS))
+
 // ----+--------+-----
-#define CLR_RS    (PORTB &= ~(LCD_RS))
-#define SET_RS    (PORTB |=  (LCD_RS))
-#define CLR_RESET (PORTB &= ~(LCD_RESET))
-#define SET_RESET (PORTB |=  (LCD_RESET))
-#define CLR_CS    (PORTB &= ~(LCD_CS))
-#define SET_CS    (PORTB |=  (LCD_CS))
-#define CLR_MOSI  (PORTB &= ~(LCD_MOSI))
-#define SET_MOSI  (PORTB |=  (LCD_MOSI))
-#define CLR_MISO  (PORTB &= ~(LCD_MISO))
-#define SET_MISO  (PORTB |=  (LCD_MISO))
-#define CLR_SCK   (PORTB &= ~(LCD_SCK))
-#define SET_SCK   (PORTB |=  (LCD_SCK))
+#define CLR_RESET (REG_PORT_OUT0 &= ~(LCD_RESET))
+#define SET_RESET (REG_PORT_OUT0 |= LCD_RESET)
+#define CLR_CS    (REG_PORT_OUT0 &= ~(LCD_CS))
+#define SET_CS    (REG_PORT_OUT0 |= LCD_CS)
+#define CLR_uCS   (REG_PORT_OUT0 &= ~(uSD_CS)))
+#define SET_uCS   (REG_PORT_OUT0 |= uSD_CS)
+#define CLR_MISO  (REG_PORT_OUT0 &= ~(LCD_MISO))
+#define SET_MISO  (REG_PORT_OUT0 |= LCD_MISO)
+// ----+--------+-----
+#define CLR_RS    (REG_PORT_OUT1 &= ~(LCD_RS))
+#define SET_RS    (REG_PORT_OUT1 |= LCD_RS)
+#define CLR_TE    (REG_PORT_OUT1 &= ~(LCD_TE))
+#define SET_TE    (REG_PORT_OUT1 |= (LCD_TE))
+#define CLR_IM3   (REG_PORT_OUT1 &= ~(LCD_IM3))
+#define SET_IM3   (REG_PORT_OUT1 |= LCD_IM3)
+#define CLR_MOSI  (REG_PORT_OUT1 &= ~(LCD_MOSI))
+#define SET_MOSI  (REG_PORT_OUT1 |= LCD_MOSI)
+#define CLR_SCK   (REG_PORT_OUT1 &= ~(LCD_SCK))
+#define SET_SCK   (REG_PORT_OUT1 |= LCD_SCK)
 
 //============================================================================
 

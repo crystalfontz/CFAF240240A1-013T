@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "port": "COM59",
+    "sketch": "CFAF240240A1-013T_Arduino.ino",
+    "output": "../../build"
+}

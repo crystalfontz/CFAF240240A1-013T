@@ -1,6 +1,6 @@
 #include <SPI.h>
 #include "st7789h2.h"
-#include "atmega328.h"
+#include "atsamd21g18.h"
 
 // **************************************************
 void show_BMPs_in_root(void)
@@ -184,28 +184,28 @@ void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
     pixel.r=*data_ptr++;
     
     //Send the R byte out.
-    SPDR = pixel.r;
+    REG_SERCOM4_SPI_DATA = pixel.r;
 
     //count this byte
     byte_count--;
     //Now that we have done all we can do, wait for the transfer to finish.
-    while (!(SPSR & _BV(SPIF)));
+    while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
 
     //Send the G out.
-    SPDR = pixel.g;
+    REG_SERCOM4_SPI_DATA = pixel.g;
 
     //count this byte
     byte_count--;
     //Now that we have done all we can do, wait for the transfer to finish.
-    while (!(SPSR & _BV(SPIF)));
+    while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
     
     //Send the B out.
-    SPDR = pixel.b;
+    REG_SERCOM4_SPI_DATA = pixel.b;
 
     //count this byte
     byte_count--;
     //Now that we have done all we can do, wait for the transfer to finish.
-    while (!(SPSR & _BV(SPIF)));
+    while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
   }
 
   //Needs some non-trivial delay here. Not sure why.
@@ -240,7 +240,7 @@ void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
   while(pixel_count)
     {
     //Send the first half of this pixel out
-    SPDR = first_half;
+    REG_SERCOM4_SPI_DATA = first_half;
     //Load the next pixel while that is transmitting
     pixel.b=*data_ptr;
     data_ptr++;
@@ -255,7 +255,7 @@ void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
     //do not need this:
     // while (!(SPSR & _BV(SPIF))) ;
     //Send the second half of the this pixel out
-    SPDR = second_half;
+    REG_SERCOM4_SPI_DATA = second_half;
     //Calculate the next second half
     second_half=((pixel.g << 3)&0xE0) | (pixel.b >> 3);
     //Done with this pixel
@@ -265,7 +265,7 @@ void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
     // while (!(SPSR & _BV(SPIF))) ;
     }
   //Wait for the final transfer to complete before we bang on CS.
-  while (!(SPSR & _BV(SPIF))) ;
+  while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
   // Deselect the OLED controller
   SET_CS;    
   }
