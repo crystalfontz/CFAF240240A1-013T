@@ -42,9 +42,8 @@
 //   https://www.crystalfontz.com/product/cfaf240240a1013t
 //
 //============================================================================
-//#include <avr/io.h>
-
-//#include <SPI.h>
+#include <Arduino.h>
+#include <SPI.h>
 // C:\Program Files (x86)\Arduino\hardware\arduino\avr\libraries\SPI\src\SPI.cpp
 // C:\Program Files (x86)\Arduino\hardware\arduino\avr\libraries\SPI\src\SPI.h
 
@@ -55,6 +54,7 @@
 
 #include "atsamd21g18.h"
 #include "st7789h2.h"
+//#include "fonts.h"
 
 //============================================================================
 void setup()
@@ -63,44 +63,20 @@ void setup()
   Serial.begin(9600);
   Serial.println("setup()");
 
-  // Pin tests
-  //  Do I have control on the pins?
-  //    REG_PORT_OUTSET0 for PORTA
-  //    REG_PORT_OUTSET1 for PORTB
-  // TE PASSED, IM3
-  //REG_PORT_DIRSET1 = LCD_TE; //TE
+  REG_PORT_DIRSET1 = (LCD_IM3 | LCD_RS);
+  REG_PORT_DIRSET0 = (LCD_CS | LCD_RESET);
   
-  // while(1)
-  // {
-  //   Serial.println("Setting Pin");
-  //   SET_IM3;
-  //   delay(500); // delay for 1 second
-  //   Serial.println("Clearing Pin");
-  //   CLR_IM3;
-  //   delay(500); // delay for 1 second
-  // }
-
-  //Set up port B as ALL inputs
-  //pinMode(3, OUTPUT);   //LCD_EN TIED to GND
-  //pinMode(5, INPUT);   //LCD_TE
-  REG_PORT_DIRSET1 = LCD_IM3;   //LCD_IM3
-  REG_PORT_DIRSET0 = uSD_CS;;   //uSD_CS
-  
-  //CLR_IM3; //SDI/SDO share MISO
   SET_IM3;  //SDI/SDO on different pins
-
-  REG_PORT_DIRSET1 = LCD_RS;   //LCD_RS
-  REG_PORT_DIRSET0 = LCD_RESET;   //LCD_RESET
-  REG_PORT_DIRSET0 = LCD_CS;;  //LCD_CS
+  //CLR_IM3; //SDI/SDO share MISO
   
   //Drive the ports to a reasonable starting state.
   CLR_RESET;  //Active low
   SET_CS;     //Active low
-  CLR_RS;
-  CLR_MOSI;
-  CLR_SCK;
+  CLR_RS;     //Command mode
+  // CLR_MOSI;
+  // CLR_SCK;
 
-  // For the Seeduino I am using, the default speed of SPI_HALF_SPEED
+  // For the Seeduino library I am using, the default speed of SPI_HALF_SPEED
   // set in C:\Program Files (x86)\Arduino\libraries\SD\src\SD.cpp
   // results in a 4MHz clock.
   //
@@ -120,26 +96,26 @@ void setup()
   // That appears to make the SD library talk at 8MHz.
   //
 
-  if (!SD.begin(7))
-    {
+  //if (!SD.begin(uSD_CS))
+  if (!SD.begin(12000000, 4))
+  {
     Serial.println("Card failed to initialize, or not present");
     //Reset the SPI clock to fast. SD card library does not clean up well.
     //Bump the clock to 8MHz. Appears to be the maximum.
-    }
+  }
   else
-    {
+  {
     Serial.println("Card initialized.");
-    }
+  }
 
-  //Bump the clock to 8MHz. Appears to be the maximum.
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+  //Bump the clock to 8MHz. Appears to be the maximum at 12MHz
+  //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));  //WORKS
+  //SPI.beginTransaction(SPISettings(16000000, MSBFIRST, SPI_MODE0));  //WORKS
+  SPI.beginTransaction(SPISettings(32000000, MSBFIRST, SPI_MODE0));  //WORKS
 
   //Initialize the LCD controller
   displayInit();
-}
-//============================================================================
-void loop()
-{
+
   Serial.println("Writing a white screen");
   fillScreen(WHITE);
   delay(500);
@@ -155,6 +131,14 @@ void loop()
   Serial.println("Writing a blue screen");
   fillScreen(BLUE);
   delay(500);
+}
+//============================================================================
+void loop()
+{
+  writeColorBars(240, 240);
+  delay(1000);
+
+  show_BMPs_in_root();
 
   Fill_OLED_Gamma_Gradient(240, 240);
   delay(1000);
@@ -162,9 +146,6 @@ void loop()
   Serial.println("Writing a black screen");
   fillScreen(BLACK);
   delay(500);
-
-  writeColorBars(240, 240);
-  delay(1000);
 
   Serial.println("Circle tests");
   //Draw a cyan circle
@@ -188,7 +169,5 @@ void loop()
   }
   delay(1000);
 
-  show_BMPs_in_root();
 } // void loop()
 //============================================================================
-

@@ -45,22 +45,23 @@ void show_BMPs_in_root(void)
             
             setDisplayWindow(0,0,239,239);
 
-            //Since we are limited in memory, break the line up from
-            // 240*3 = 720 bytes into three chunks of 240 pixels
-            // each 240*3 = 720 bytes.
-            //Making this static speeds it up slightly (10ms)
-            //Reduces flash size uses less bytes.
-            static uint8_t uSDLine[240];
-            for(uint8_t line=0; line<(240); line++)
-            {
-              for(uint8_t line_section=0; line_section<3; line_section++)
+            //Since we are limited in memory, break the image up
+            //into 24 sections, each one 10 lines.
+            // 240 * 3 * 10 = 7200
+            const uint8_t width = 240;
+            const uint8_t height = 240;
+            const uint8_t lines_per_section = 10;
+            const uint8_t sections = height/lines_per_section;
+            static uint8_t uSDLine[width*3*lines_per_section];
+            for(uint8_t line = 0; line < height; line+=lines_per_section)
               {
-                //Get a third of the row worth of pixels
-                bmp_file.read(uSDLine,240);
-                //Now write this third to the TFT
-                SPI_send_pixels_666(240,uSDLine);
+              //Get 10 lines worth of pixel
+              // This takes about 26mS to read in the 7200 bytes
+              // ~2,215,384 Hz Thoughput
+              bmp_file.read(uSDLine, width*3*lines_per_section);
+              //Now write this third to the TFT
+              SPI_send_pixels_666(width*lines_per_section, uSDLine);
               }
-            }
           }
           else
           {
@@ -164,10 +165,17 @@ void pictureSlideShow()
 }
 #endif //(SD_ENABLED)
 // **************************************************
+
+//There is a 1-byte buffer in front of the the SPI transmit shift
+//register. If that register is empty, we can write.
+#define M_SPI_WRITE_WAIT(x)  while(0==(REG_SERCOM4_SPI_INTFLAG&0x1)); REG_SERCOM4_SPI_DATA=(x)
+//If we know it is empty, we do not need to check
+#define M_SPI_WRITE(x)       REG_SERCOM4_SPI_DATA=(x)
+
 //============================================================================
 // This function transfers data, in one stream. Slightly
 // optimized to do index operations during SPI transfers.
-void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
+void SPI_send_pixels_666(uint16_t pixel_count, uint8_t *data_ptr)
 {
   pixel_t pixel;
 
@@ -176,40 +184,47 @@ void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
   // Select the LCD controller
   CLR_CS;
 
-  while(byte_count)
+  // This takes 4.82mS to ship out the 7200 bytes
+  // ~11,950,207 Hz
+  while(pixel_count)
   {
+
     //Load the byte
     pixel.b=*data_ptr++;
     pixel.g=*data_ptr++;
     pixel.r=*data_ptr++;
     
+#if(1)
+    M_SPI_WRITE_WAIT(pixel.r);
+    //M_SPI_WRITE_WAIT(*data_ptr++);
+    M_SPI_WRITE_WAIT(pixel.g);
+    M_SPI_WRITE_WAIT(pixel.b);
+
+    //count this pixel
+    pixel_count--;
+#else
     //Send the R byte out.
     REG_SERCOM4_SPI_DATA = pixel.r;
-
-    //count this byte
-    byte_count--;
     //Now that we have done all we can do, wait for the transfer to finish.
     while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
 
     //Send the G out.
     REG_SERCOM4_SPI_DATA = pixel.g;
-
-    //count this byte
-    byte_count--;
     //Now that we have done all we can do, wait for the transfer to finish.
     while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
     
     //Send the B out.
     REG_SERCOM4_SPI_DATA = pixel.b;
 
-    //count this byte
-    byte_count--;
+    //count this pixel
+    pixel_count--;
+
     //Now that we have done all we can do, wait for the transfer to finish.
     while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
+#endif // 0
   }
-
-  //Needs some non-trivial delay here. Not sure why.
-  delayMicroseconds(2);    
+  
+  while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
   // Deselect the LCD controller
   SET_CS;
 }
@@ -303,3 +318,10 @@ void writeData(uint8_t data)
 	// Deselect the LCD controller
 	SET_CS;
 }
+
+// extern "C" char *sbrk(int i);
+ 
+// int FreeRam () {
+//   char stack_dummy = 0;
+//   return &stack_dummy - sbrk(0);
+// }

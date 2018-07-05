@@ -3,28 +3,33 @@
 // ********************************************************
 // Defines for the ST7789 registers.
 // ref: https://www.crystalfontz.com/products/document/3277/ST7735_V2.1_20100505.pdf
-#define ST7789_SLPIN      (0x10)
-#define ST7789_SLPOUT     (0x11)
-#define ST7789_INVOFF     (0x20)
-#define ST7789_INVON      (0x21)
-#define ST7789_DISPOFF    (0x28)
-#define ST7789_DISPON     (0x29)
-#define ST7789_CASET      (0x2A)
-#define ST7789_RASET      (0x2B)
-#define ST7789_RAMWR      (0x2C)
-#define ST7789_MADCTL     (0x36)
-#define ST7789_COLMOD     (0x3A)
-#define ST7789_PORCTRL    (0xB2)
-#define ST7789_GCTRL      (0xB7)
-#define ST7789_VCOMS      (0xBB)
+#define ST7789_SLPIN      (0x10)  //Sleep in
+#define ST7789_SLPOUT     (0x11)  //Sleep Out
+#define ST7789_INVOFF     (0x20)  //Display Inversion Off
+#define ST7789_INVON      (0x21)  //Display Inversion On
+#define ST7789_DISPOFF    (0x28)  //Display Off
+#define ST7789_DISPON     (0x29)  //Display On
+#define ST7789_CASET      (0x2A)  //Column Address Set
+#define ST7789_RASET      (0x2B)  //Row Address Set
+#define ST7789_RAMWR      (0x2C)  //Memory Write
+#define ST7789_TEOFF      (0x34)  //Tearing Effect Line OFF
+#define ST7789_TEON       (0x35)  //Tearing Effect Line On
+#define ST7789_MADCTL     (0x36)  //Memory Data Access Control
+#define ST7789_COLMOD     (0x3A)  //Interface Pixel Format
+#define ST7789_WRCACE     (0x55)  //Write Content Adaptive Brightness Control and Color Enhancement
+#define ST7789_WRCABCMB   (0x5E)  //Write CABC minimum brightness
+#define ST7789_PORCTRL    (0xB2)  //Porch control
+#define ST7789_GCTRL      (0xB7)  //Gate Control
+#define ST7789_VCOMS      (0xBB)  //Gate on timing adjustment
 #define ST7789_LCMCTRL    (0xC0)  //LCM Control
 #define ST7789_VDVVRHEN   (0xC2)  //VDV and VRH Command Enable
 #define ST7789_VRHS       (0xC3)  //VRH Set
 #define ST7789_VDVSET     (0xC4)  //VDV Set
 #define ST7789_FRCTR2     (0xC6)  //Frame Rate Control in Normal Mode
-#define ST7789_PWCTRL1    (0xD0)   //Power Control 1
-#define ST7789_PVGAMCTRL  (0xE0)
-#define ST7789_NVGAMCTRL  (0xE1)
+#define ST7789_CABCCTRL   (0xC7)  //CABC Control
+#define ST7789_PWCTRL1    (0xD0)  //Power Control 1
+#define ST7789_PVGAMCTRL  (0xE0)  //Positive Voltage Gamma Control
+#define ST7789_NVGAMCTRL  (0xE1)  //Negative Voltage Gamma Control
 // **************************************************
 void displayInit(void)
 {
@@ -34,7 +39,7 @@ void displayInit(void)
   SET_RESET;
   delay(150);//120mS max
 
-  //SLPOUT (11h): Sleep Out ("Sleep Out"  is chingrish for "wake")
+  //SLPOUT (11h): Sleep Out ("Sleep Out" is chingrish for "wake")
   //The DC/DC converter is enabled, Internal display oscillator
   //is started, and panel scanning is started.
   SPI_sendCommand(ST7789_SLPOUT);
@@ -42,10 +47,6 @@ void displayInit(void)
 
   //-----------------------------Display setting--------------------------------
   SPI_sendCommand(ST7789_MADCTL); //Page 215
-  //SPI_sendData(0x00); //DEFAULT
-  //SPI_sendData(0x48); //TEST
-  SPI_sendData(0x40);
-  
   // Bit D7- Page Address Order
   // “0” = Top to Bottom (When MADCTL D7=”0”).
   // “1” = Bottom to Top (When MADCTL D7=”1”).
@@ -65,6 +66,11 @@ void displayInit(void)
   // Bit D2- Display Data Latch Data Order
   // “0” = LCD Refresh Left to Right (When MADCTL D2=”0”)
   // “1” = LCD Refresh Right to Left (When MADCTL D2=”1”)  
+  //SPI_sendData(0x00); //DEFAULT
+  //SPI_sendData(0x48); //TEST
+
+  SPI_sendData(0x40);
+
   //Address control 
   SPI_sendCommand(ST7789_COLMOD); //Interface pixel format Pg 224
   SPI_sendData(0x06);
@@ -119,12 +125,7 @@ void displayInit(void)
   SPI_sendData(0xA4);
   SPI_sendData(0xA1);     //VDS=2.3V/AVCL = -4.8V /AVDD=6.8V
 
-  //               --------------------
-  //               --------------------
-  //               Set Gamma     for BOE 1.3
-  //               --------------------
-  // Set_Gamma: //  Is this a goto?
-
+  //Set the Gamma Tables
 	SPI_sendCommand(ST7789_PVGAMCTRL);
   SPI_sendData(0xD0);
   SPI_sendData(0x08);
@@ -157,6 +158,67 @@ void displayInit(void)
   SPI_sendData(0x14);
   SPI_sendData(0x2F);
   SPI_sendData(0x31);
+
+  //Disable Tearing
+  SPI_sendCommand(ST7789_TEOFF);
+
+  //Enable Tearing
+	//SPI_sendCommand(ST7789_TEON);
+  //SPI_sendData(0x01); // ON
+  // When TEM =’0’: The Tearing Effect output line consists of V-Blanking information only
+  // When TEM =’1’: The Tearing Effect output Line consists of both V-Blanking and H-Blanking information
+
+  //Content Adaptive Brightness controller
+	SPI_sendCommand(ST7789_CABCCTRL); //Defaults to 0x00
+  #define LEDONREV 0
+  // LEDONREV: Reverse the status of LED_ON:
+  // “0”: keep the status of LED_ON.
+  // “1”: reverse the status of LED_ON.
+  #define DPOFPWM  0
+  // DPOFPWM: initial state control of LEDPWM.
+  // “0”: The initial state of LEDPWM is low.
+  // “1”: The initial state of LEDPWM is high.
+  #define PWMFIX   0
+  // PWMFIX: LEDPWM fix control.
+  // “0”: LEDPWM control by CABC.
+  // “1”: fix LEDPWM in “ON” status.
+  #define PWMPOL   0
+  // PWMPOL: LEDPWM polarity control.
+  // “0”: polarity high.
+  // “1”: polarity low.
+  SPI_sendData((LEDONREV << 3) | (DPOFPWM << 2) | (PWMFIX << 1) | (PWMPOL << 0));
+
+	SPI_sendCommand(ST7789_WRCACE); //Defaults to 0x00
+  #define CECTRL 0
+  // CECTRL: Color Enhancement Control Bit:
+  // CECTRL=0: Color Enhancement Off.
+  // CECTRL=1: Color Enhancement On.
+
+  #define CE1 0
+  #define CE0 0
+  // |CE1 | CE0 | Color enhancement level
+  // ------------------------------------
+  // | 0  | 0   | Low enhancement
+  // | 0  | 1   | Medium enhancement
+  // | 1  | 1   | High enhancement
+  // ------------------------------------
+  
+  #define C1 0
+  #define C0 0
+  // | C1 | C0 | Function
+  // ---------------------------------
+  // | 0  | 0  | Off
+  // | 0  | 1  | User Interface Mode
+  // | 1  | 0  | Still Picture
+  // | 1  | 1  | Moving Image
+  // ---------------------------------
+  SPI_sendData((CECTRL << 7) | (CE1 << 5) | (CE0 << 4) | (C1 << 1) | (C0 << 0));
+
+  //
+  SPI_sendCommand(ST7789_WRCABCMB); //Defaults to 0x00
+  //  - This command is used to set the minimum brightness value of the display for CABC function.
+  //  -In principle relationship is that 00h value means the lowest brightness for CABC and FFh value means the brightness for CABC  
+  SPI_sendData(0xFF);
 
   setDisplayWindow(0, 0, 239, 239);
   //--------------------

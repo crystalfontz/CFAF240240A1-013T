@@ -39,6 +39,7 @@ class pixel_t
 // #13/D13 |  PB5 | LCD_SCK (hardware SPI)   | White
 // ----+--------+-----
 //#define LCD_EN    0x08  // Currently tied to GND
+// ----+--------+-----
 #define	LCD_RESET	PORT_PA04
 #define	LCD_CS	  PORT_PA05
 #define uSD_CS    PORT_PA08
@@ -87,6 +88,6 @@ void writeCommand(uint8_t command);
 void writeData(uint8_t data);
 void show_BMPs_in_root(void);
 void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr);
-void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr);
+void SPI_send_pixels_666(uint16_t pixel_count, uint8_t *data_ptr);
 
 #endif /* __ATMEGA328_H__ */
