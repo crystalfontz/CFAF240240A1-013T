@@ -55,7 +55,7 @@ void show_BMPs_in_root(void)
             static uint8_t uSDLine[width*3*lines_per_section];
             for(uint8_t line = 0; line < height; line+=lines_per_section)
               {
-              //Get 10 lines worth of pixel
+              //Get 10 lines worth of pixels
               // This takes about 26mS to read in the 7200 bytes
               // ~2,215,384 Hz Thoughput
               bmp_file.read(uSDLine, width*3*lines_per_section);
@@ -166,18 +166,12 @@ void pictureSlideShow()
 #endif //(SD_ENABLED)
 // **************************************************
 
-//There is a 1-byte buffer in front of the the SPI transmit shift
-//register. If that register is empty, we can write.
-#define M_SPI_WRITE_WAIT(x)  while(0==(REG_SERCOM4_SPI_INTFLAG&0x1)); REG_SERCOM4_SPI_DATA=(x)
-//If we know it is empty, we do not need to check
-#define M_SPI_WRITE(x)       REG_SERCOM4_SPI_DATA=(x)
-
 //============================================================================
 // This function transfers data, in one stream. Slightly
 // optimized to do index operations during SPI transfers.
 void SPI_send_pixels_666(uint16_t pixel_count, uint8_t *data_ptr)
 {
-  pixel_t pixel;
+  color_t color;
 
   // Select the LCD's data register
   SET_RS;
@@ -190,31 +184,31 @@ void SPI_send_pixels_666(uint16_t pixel_count, uint8_t *data_ptr)
   {
 
     //Load the byte
-    pixel.b=*data_ptr++;
-    pixel.g=*data_ptr++;
-    pixel.r=*data_ptr++;
+    color.b=*data_ptr++;
+    color.g=*data_ptr++;
+    color.r=*data_ptr++;
     
 #if(1)
-    M_SPI_WRITE_WAIT(pixel.r);
+    M_SPI_WRITE_WAIT(color.r);
     //M_SPI_WRITE_WAIT(*data_ptr++);
-    M_SPI_WRITE_WAIT(pixel.g);
-    M_SPI_WRITE_WAIT(pixel.b);
+    M_SPI_WRITE_WAIT(color.g);
+    M_SPI_WRITE_WAIT(color.b);
 
     //count this pixel
     pixel_count--;
 #else
     //Send the R byte out.
-    REG_SERCOM4_SPI_DATA = pixel.r;
+    REG_SERCOM4_SPI_DATA = color.r;
     //Now that we have done all we can do, wait for the transfer to finish.
     while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
 
     //Send the G out.
-    REG_SERCOM4_SPI_DATA = pixel.g;
+    REG_SERCOM4_SPI_DATA = color.g;
     //Now that we have done all we can do, wait for the transfer to finish.
     while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
     
     //Send the B out.
-    REG_SERCOM4_SPI_DATA = pixel.b;
+    REG_SERCOM4_SPI_DATA = color.b;
 
     //count this pixel
     pixel_count--;
@@ -231,7 +225,7 @@ void SPI_send_pixels_666(uint16_t pixel_count, uint8_t *data_ptr)
 
 void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
   {
-  pixel_t pixel;
+  color_t color;
   uint8_t first_half, second_half;
 
   // Select the OLED's data register
@@ -240,39 +234,39 @@ void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
   CLR_CS;
 
   //Load the first pixel. BMPs BGR format
-  pixel.b=*data_ptr;
+  color.b=*data_ptr;
   data_ptr++;
-  pixel.g=*data_ptr;
+  color.g=*data_ptr;
   data_ptr++;
-  pixel.r=*data_ptr;
+  color.r=*data_ptr;
   data_ptr++;
 
   //The display takes two bytes (565) RRRRR GGGGGG BBBBB 
   //to show one pixel.
-  first_half=(pixel.r&0xF8) | (pixel.g >> 5);
-  second_half=((pixel.g << 3)&0xE0) | (pixel.b >> 3);
+  first_half=(color.r&0xF8) | (color.g >> 5);
+  second_half=((color.g << 3)&0xE0) | (color.b >> 3);
 
   while(pixel_count)
     {
     //Send the first half of this pixel out
     REG_SERCOM4_SPI_DATA = first_half;
     //Load the next pixel while that is transmitting
-    pixel.b=*data_ptr;
+    color.b=*data_ptr;
     data_ptr++;
-    pixel.g=*data_ptr;
+    color.g=*data_ptr;
     data_ptr++;
-    pixel.r=*data_ptr;
+    color.r=*data_ptr;
     data_ptr++;
     //Calculate the next first half while that is transmitting
     // ~1.9368us -0.1256 us = 1.8112uS
-    first_half=(pixel.r&0xF8) | (pixel.g >> 5);
+    first_half=(color.r&0xF8) | (color.g >> 5);
     //At 8MHz SPI clock, the transfer is done by now, so we
     //do not need this:
     // while (!(SPSR & _BV(SPIF))) ;
     //Send the second half of the this pixel out
     REG_SERCOM4_SPI_DATA = second_half;
     //Calculate the next second half
-    second_half=((pixel.g << 3)&0xE0) | (pixel.b >> 3);
+    second_half=((color.g << 3)&0xE0) | (color.b >> 3);
     //Done with this pixel
     pixel_count--;
     //At 8MHz SPI clock, the transfer is done by now, so we
@@ -318,10 +312,11 @@ void writeData(uint8_t data)
 	// Deselect the LCD controller
 	SET_CS;
 }
-
+//================================================================================
 // extern "C" char *sbrk(int i);
- 
+//
 // int FreeRam () {
 //   char stack_dummy = 0;
 //   return &stack_dummy - sbrk(0);
 // }
+//================================================================================

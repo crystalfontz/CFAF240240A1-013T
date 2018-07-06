@@ -1,35 +1,4 @@
 #include "st7789h2.h"
-
-// ********************************************************
-// Defines for the ST7789 registers.
-// ref: https://www.crystalfontz.com/products/document/3277/ST7735_V2.1_20100505.pdf
-#define ST7789_SLPIN      (0x10)  //Sleep in
-#define ST7789_SLPOUT     (0x11)  //Sleep Out
-#define ST7789_INVOFF     (0x20)  //Display Inversion Off
-#define ST7789_INVON      (0x21)  //Display Inversion On
-#define ST7789_DISPOFF    (0x28)  //Display Off
-#define ST7789_DISPON     (0x29)  //Display On
-#define ST7789_CASET      (0x2A)  //Column Address Set
-#define ST7789_RASET      (0x2B)  //Row Address Set
-#define ST7789_RAMWR      (0x2C)  //Memory Write
-#define ST7789_TEOFF      (0x34)  //Tearing Effect Line OFF
-#define ST7789_TEON       (0x35)  //Tearing Effect Line On
-#define ST7789_MADCTL     (0x36)  //Memory Data Access Control
-#define ST7789_COLMOD     (0x3A)  //Interface Pixel Format
-#define ST7789_WRCACE     (0x55)  //Write Content Adaptive Brightness Control and Color Enhancement
-#define ST7789_WRCABCMB   (0x5E)  //Write CABC minimum brightness
-#define ST7789_PORCTRL    (0xB2)  //Porch control
-#define ST7789_GCTRL      (0xB7)  //Gate Control
-#define ST7789_VCOMS      (0xBB)  //Gate on timing adjustment
-#define ST7789_LCMCTRL    (0xC0)  //LCM Control
-#define ST7789_VDVVRHEN   (0xC2)  //VDV and VRH Command Enable
-#define ST7789_VRHS       (0xC3)  //VRH Set
-#define ST7789_VDVSET     (0xC4)  //VDV Set
-#define ST7789_FRCTR2     (0xC6)  //Frame Rate Control in Normal Mode
-#define ST7789_CABCCTRL   (0xC7)  //CABC Control
-#define ST7789_PWCTRL1    (0xD0)  //Power Control 1
-#define ST7789_PVGAMCTRL  (0xE0)  //Positive Voltage Gamma Control
-#define ST7789_NVGAMCTRL  (0xE1)  //Negative Voltage Gamma Control
 // **************************************************
 void displayInit(void)
 {
@@ -243,11 +212,25 @@ void exitSleep (void)
 	// register are reset to the start column/start page positions.
 }
 // ********************************************************
-void fillScreen(uint32_t color)
+// void fillScreen(uint32_t color)
+// {
+// 	unsigned int i,j;
+
+//   setDisplayWindow(0, 0, 240, 240);
+// 	for(i=0;i<240;i++)
+// 	{
+// 		for(j=0;j<240;j++)
+// 		{
+// 			writeColor(color);
+// 		}
+// 	}
+// }
+//============================================================================
+void fillScreen(color_t color)
 {
 	unsigned int i,j;
 
-  setDisplayWindow(0, 0, 240, 240);
+  setDisplayWindow(0, 0, 239, 239);
 	for(i=0;i<240;i++)
 	{
 		for(j=0;j<240;j++)
@@ -288,8 +271,52 @@ void fillScreen(uint32_t color)
 //   //RAMWR (2Ch): Memory Write
 //   SPI_sendCommand(ST7789_RAMWR); //write data
 // }
+// ********************************************************
+void set_raw_XY(uint8_t x,uint8_t y)
+{
+  // Serial.print("set_raw_XY ");
+  // Serial.print(x, DEC);
+  // Serial.println(y, DEC);
+  // Select the LCD controller
+  CLR_CS;
+  //Set_LCD_for_write_at_X_Y(x, y);
+  //CASET (2Ah): Column Address Set
+  // * The value of XS [15:0] and XE [15:0] are referred when RAMWR
+  //   command comes.
+  // * Each value represents one column line in the Frame Memory.
+  // * XS [15:0] always must be equal to or less than XE [15:0]
+  CLR_RS; // Select the LCD's command register
+  M_SPI_WRITE_WAIT(ST7789_CASET); //Column address set
+  //Write the parameters for the "column address set" command
+  SET_RS; // Select the LCD's data register
+  M_SPI_WRITE(0x00);     //Start MSB = XS[15:8]
+  //M_SPI_WRITE_WAIT(0x02 + x); //Start LSB = XS[ 7:0]
+  M_SPI_WRITE_WAIT(0x00 + x); //Start LSB = XS[ 7:0]
+  M_SPI_WRITE_WAIT(0x00);     //End MSB   = XE[15:8]
+  M_SPI_WRITE_WAIT(0xEF);     //End LSB   = XE[ 7:0]
+  //Write the "row address set" command to the LCD
+  //RASET (2Bh): Row Address Set
+  // * The value of YS [15:0] and YE [15:0] are referred when RAMWR
+  //   command comes.
+  // * Each value represents one row line in the Frame Memory.
+  // * YS [15:0] always must be equal to or less than YE [15:0]
+  CLR_RS; // Select the LCD's command register
+  M_SPI_WRITE_WAIT(ST7789_RASET); //Row address set
+  //Write the parameters for the "row address set" command
+  SET_RS; // Select the LCD's data register
+  M_SPI_WRITE(0x00);     //Start MSB = YS[15:8]
+  //M_SPI_WRITE_WAIT(0x01 + y); //Start LSB = YS[ 7:0]
+  M_SPI_WRITE_WAIT(0x00 + y); //Start LSB = YS[ 7:0]
+  M_SPI_WRITE_WAIT(0x00);     //End MSB   = YE[15:8]
+  M_SPI_WRITE_WAIT(0xEF);     //End LSB   = YE[ 7:0]
+  //Write the "write data" command to the LCD
+  //RAMWR (2Ch): Memory Write
+  CLR_RS; // Select the LCD's command register
+  M_SPI_WRITE_WAIT(ST7789_RAMWR); //write data
+  SET_RS; // Select the LCD's data register
+}
 //*********************************************************
-void setDisplayWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
+void setDisplayWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
   //CASET (2Ah): Column Address Set
   // * The value of XS [15:0] and XE [15:0] are referred when RAMWR
@@ -343,8 +370,7 @@ void setInterface(void)
 	// PORTF is directly mapped to IM[0:3]
 	//PORTF = (IM[3]<<3 | IM[2]<<2 | IM[1]<<1 | IM[0]<<0);
 }
-// **************************************************
-void writeColor(uint32_t color)
+void writeColor(color_t color)
 {
 // #ifdef MCU16BIT	
 // 	SET_CD;
@@ -368,9 +394,9 @@ void writeColor(uint32_t color)
   // Select the LCD's data register
   SET_RS;
   //Send the command via SPI:
-  SPI.transfer(color >> 16);
-  SPI.transfer(color >>  8);
-  SPI.transfer(color >>  0);
+  SPI.transfer(color.r);
+  SPI.transfer(color.g);
+  SPI.transfer(color.b);
   // Deselect the LCD controller
   SET_CS;
 }
@@ -431,8 +457,7 @@ void writeColorBars(uint8_t height, uint8_t width)
   b=t;\
   }\
 //============================================================================
-void Fast_Horizontal_Line(uint16_t x0, uint16_t y, uint16_t x1,
-                          uint8_t R, uint8_t G, uint8_t B)
+void Fast_Horizontal_Line(uint16_t x0, uint16_t y, uint16_t x1, color_t color)
 {
   uint16_t temp;
   if(x1 < x0)
@@ -449,9 +474,9 @@ void Fast_Horizontal_Line(uint16_t x0, uint16_t y, uint16_t x1,
   while(x0 <= x1)
   {
     //Write the single pixel's worth of data
-    SPI.transfer(R);
-    SPI.transfer(G);
-    SPI.transfer(B);
+    SPI.transfer(color.r);
+    SPI.transfer(color.g);
+    SPI.transfer(color.b);
     x0++;
   }
   // Deselect the OLED controller
@@ -474,40 +499,21 @@ void Fill_OLED_Gamma_Gradient(uint8_t height, uint8_t width)
     //Red
     OLED_Line(x,(barHeight*0),
               x,(barHeight*1) - 1,
-              x,0,0);
+              color_t {x,0,0});
     //Green
     OLED_Line(x,(barHeight*1),
               x,(barHeight*2) - 1,
-              0,x,0);
+              color_t {0,x,0});
     //Blue
     OLED_Line(x,(barHeight*2),
               x,(barHeight*3) - 1,
-              0,0,x);
-  }
-}
-//============================================================================
-void Fill_LCD(uint8_t R, uint8_t G, uint8_t B)
-{
-  register int h, w;
- 
-  setDisplayWindow(0, 0, 239, 239);
-
-  //Fill display with a given RGB value
-  for (h = 0; h < 240; h++)
-  {
-    for (w = 0; w < (240); w++)
-    {
-      SPI_sendData(R); //Blue
-      SPI_sendData(G); //Green
-      SPI_sendData(B); //Red
-    }
+              color_t{0,0,x});
   }
 }
 //============================================================================
 // From: http://rosettacode.org/wiki/Bitmap/Bresenham's_line_algorithm#C
 void OLED_Line(uint16_t x0, uint16_t y0,
-              uint16_t x1, uint16_t y1,
-              uint8_t r, uint8_t g, uint8_t b)
+              uint16_t x1, uint16_t y1, color_t color)
 {
   int16_t dx;
   int16_t sx;
@@ -527,7 +533,7 @@ void OLED_Line(uint16_t x0, uint16_t y0,
 
     for (;;)
     {
-      Put_Pixel(x0, y0, r,g,b);
+      Put_Pixel(x0, y0, color);
       if ((x0 == x1) && (y0 == y1))
       {
         break;
@@ -548,22 +554,66 @@ void OLED_Line(uint16_t x0, uint16_t y0,
   else
   {
     //Optimized for OLED
-    Fast_Horizontal_Line(x0, y0, x1,r,g,b);
+    Fast_Horizontal_Line(x0, y0, x1, color);
   }
 }  
 //============================================================================
-void Put_Pixel(uint8_t x, uint8_t y, uint8_t R, uint8_t G, uint8_t B)
+void Put_Pixel(uint8_t x, uint8_t y, color_t color)
 {
   setDisplayWindow (x, y, 239, 239);
 
   //Write the single pixel's worth of data
-  SPI_sendData(B); //Blue
-  SPI_sendData(G); //Green
-  SPI_sendData(R); //Red
+  SPI_sendData(color.r); //Blue
+  SPI_sendData(color.g); //Green
+  SPI_sendData(color.b); //Red
 }
 //============================================================================
+void Put_Pixel_Raw(uint8_t x, uint8_t y, color_t color)
+  {
+  // Select the LCD controller
+  CLR_CS;
+  //Set_LCD_for_write_at_X_Y(x, y);
+  //CASET (2Ah): Column Address Set
+  // * The value of XS [15:0] and XE [15:0] are referred when RAMWR
+  //   command comes.
+  // * Each value represents one column line in the Frame Memory.
+  // * XS [15:0] always must be equal to or less than XE [15:0]
+  CLR_RS; // Select the LCD's command register
+  M_SPI_WRITE_WAIT(ST7789_CASET); //Column address set
+  //Write the parameters for the "column address set" command
+  SET_RS; // Select the LCD's data register
+  M_SPI_WRITE(0x00);     //Start MSB = XS[15:8]
+  M_SPI_WRITE_WAIT(0x02 + x); //Start LSB = XS[ 7:0]
+  M_SPI_WRITE_WAIT(0x00);     //End MSB   = XE[15:8]
+  M_SPI_WRITE_WAIT(0x81);     //End LSB   = XE[ 7:0]
+  //Write the "row address set" command to the LCD
+  //RASET (2Bh): Row Address Set
+  // * The value of YS [15:0] and YE [15:0] are referred when RAMWR
+  //   command comes.
+  // * Each value represents one row line in the Frame Memory.
+  // * YS [15:0] always must be equal to or less than YE [15:0]
+  CLR_RS; // Select the LCD's command register
+  M_SPI_WRITE_WAIT(ST7789_RASET); //Row address set
+  //Write the parameters for the "row address set" command
+  SET_RS; // Select the LCD's data register
+  M_SPI_WRITE(0x00);     //Start MSB = YS[15:8]
+  M_SPI_WRITE_WAIT(0x01 + y); //Start LSB = YS[ 7:0]
+  M_SPI_WRITE_WAIT(0x00);     //End MSB   = YE[15:8]
+  M_SPI_WRITE_WAIT(0x80);     //End LSB   = YE[ 7:0]
+  //Write the "write data" command to the LCD
+  //RAMWR (2Ch): Memory Write
+  CLR_RS; // Select the LCD's command register
+  M_SPI_WRITE_WAIT(ST7789_RAMWR); //write data
+  SET_RS; // Select the LCD's data register
+  M_SPI_WRITE(color.r);
+  M_SPI_WRITE_WAIT(color.b);
+  M_SPI_WRITE_WAIT(color.g);
+  //Deselect the LCD controller
+  SET_CS;
+  }
+//================================================================================
 // From: http://en.wikipedia.org/wiki/Midpoint_circle_algorithm
-void LCD_Circle(uint8_t x0, uint8_t y0, uint8_t radius, uint8_t R, uint8_t G, uint8_t B)
+void LCD_Circle(uint8_t x0, uint8_t y0, uint8_t radius, color_t color)
   {
   uint8_t x = radius;
   uint8_t y = 0;
@@ -572,21 +622,21 @@ void LCD_Circle(uint8_t x0, uint8_t y0, uint8_t radius, uint8_t R, uint8_t G, ui
   while (x >= y)
     {
     //11 O'Clock
-    Put_Pixel(x0 - y, y0 + x, R, G, B);
+    Put_Pixel(x0 - y, y0 + x, color);
     //1 O'Clock
-    Put_Pixel(x0 + y, y0 + x, R, G, B);
+    Put_Pixel(x0 + y, y0 + x, color);
     //10 O'Clock
-    Put_Pixel(x0 - x, y0 + y, R, G, B);
+    Put_Pixel(x0 - x, y0 + y, color);
     //2 O'Clock
-    Put_Pixel(x0 + x, y0 + y, R, G, B);
+    Put_Pixel(x0 + x, y0 + y, color);
     //8 O'Clock
-    Put_Pixel(x0 - x, y0 - y, R, G, B);
+    Put_Pixel(x0 - x, y0 - y, color);
     //4 O'Clock
-    Put_Pixel(x0 + x, y0 - y, R, G, B);
+    Put_Pixel(x0 + x, y0 - y, color);
     //7 O'Clock
-    Put_Pixel(x0 - y, y0 - x, R, G, B);
+    Put_Pixel(x0 - y, y0 - x, color);
     //5 O'Clock
-    Put_Pixel(x0 + y, y0 - x, R, G, B);
+    Put_Pixel(x0 + y, y0 - x, color);
 
     y++;
     if (radiusError < 0)

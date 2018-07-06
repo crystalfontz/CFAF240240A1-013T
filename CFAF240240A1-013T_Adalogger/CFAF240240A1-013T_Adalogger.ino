@@ -54,7 +54,9 @@
 
 #include "atsamd21g18.h"
 #include "st7789h2.h"
-//#include "fonts.h"
+#include "fonts.h"
+#include "font_08x08.h"
+#include "font_12x16.h"
 
 //============================================================================
 void setup()
@@ -135,13 +137,40 @@ void setup()
 //============================================================================
 void loop()
 {
+  while(1)
+  {
+  font = &f_12x16;
+  Serial.println("Writing 12x16");
+  LCD_Character(12,16,'A');
+  LCD_Character(12+12,16,'!');
+  LCD_Character(12+12+12,16,'C');
+  LCD_Character(12+12+12+12,16,'=');
+  LCD_Character(12+12+12+12+12,16,'\"');
+
+  font = &f_08x08;
+  Serial.println("Writing 08x08");
+  LCD_Character(120,160,'A');
+  LCD_Character(120+8,160,'!');
+  LCD_Character(120+8+8,160,'C');
+
+  LCD_String(40, 40, "Test String Little");
+
+  font = &f_12x16;
+  LCD_String(50, 50, "Test String Big");
+  LCD_String(130, 70, "Test String Big");
+
+
+  delay(1000);
+  }
+
+  #if 1
   writeColorBars(240, 240);
   delay(1000);
 
-  show_BMPs_in_root();
-
   Fill_OLED_Gamma_Gradient(240, 240);
   delay(1000);
+
+  show_BMPs_in_root();
 
   Serial.println("Writing a black screen");
   fillScreen(BLACK);
@@ -149,25 +178,60 @@ void loop()
 
   Serial.println("Circle tests");
   //Draw a cyan circle
-  LCD_Circle(64, 64, 63,0x00,0xFF,0xFF);
+  LCD_Circle(64, 64, 63, CYAN);
   //Draw a green circle
-  LCD_Circle(21, 64, 20,0x00,0xFF,0x00);
+  LCD_Circle(21, 64, 20, GREEN);
   //Draw a white circle
-  LCD_Circle(64, 64, 20,0xFF,0xFF,0xFF);
+  LCD_Circle(64, 64, 20, WHITE);
   //Draw a red circle
-  LCD_Circle(107, 64, 20,0xFF,0x00,0x00);
+  LCD_Circle(107, 64, 20, RED);
   //Draw a purple circle
-  LCD_Circle(64, 107, 16,0xFF,0x00,0xFF);
+  LCD_Circle(64, 107, 16, MAGENTA);
   //Draw a orange circle
-  LCD_Circle(64, 21, 14,0xFF,0xA5,0x00);
+  LCD_Circle(64, 21, 14, color_t {0xFF, 0xA5, 0x00});
   delay(1000);
 
   Serial.println("draw some circles");
+  color_t tempColor = {0x00, 0x00, 0x00};
   for(uint8_t i = 2; i < 60; i += 2)
   {
-    LCD_Circle(i+2, 64, i,i<<2,0xff-(i<<2),0x00);
+    tempColor = {i<<2, 0xff-(i<<2),0x00};
+    //LCD_Circle(i+2, 64, i,i<<2,0xff-(i<<2),0x00);
+    LCD_Circle(i+2, 64, i, tempColor);
   }
   delay(1000);
+  #endif
+
+  while(1)
+  {
+    for(uint8_t y=0;y<=75;y++)
+    {
+      LCD_Character(63+(12*0),y+(16*2),'2');
+      LCD_Character(63+(12*1),y+(16*2),'1');
+      LCD_Character(63+(12*2),y+(16*2),'0');
+      LCD_Character(63+(12*3),y+(16*2),'0');
+      LCD_Character(63+(12*4),y+(16*2),'0');
+      //delay(100);
+      LCD_Character(63+(12*0),y+(16*1),'2');
+      LCD_Character(63+(12*1),y+(16*1),'2');
+      LCD_Character(63+(12*2),y+(16*1),'0');
+      LCD_Character(63+(12*3),y+(16*1),'0');
+      LCD_Character(63+(12*4),y+(16*1),'0');
+      //delay(100);
+
+      LCD_Character(63+(12*0),y,'2');
+      LCD_Character(63+(12*0),y,'3');
+      LCD_Character(63+(12*0),y,'0');
+      LCD_Character(63+(12*0),y,'0');
+      LCD_Character(63+(12*0),y,'0');
+      //delay(100);
+    }
+  }
+
+  font = &f_08x08;
+  //transparent = false;  // Need to change scope for this to work
+  LCD_Character(20,63,'A');
+  LCD_Character(20+12,63,'Z');
 
 } // void loop()
 //============================================================================

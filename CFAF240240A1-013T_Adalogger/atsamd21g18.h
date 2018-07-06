@@ -4,15 +4,12 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <avr/io.h>
-// #include <avr/interrupt.h>
-// #include <avr/pgmspace.h>
-//#include "MMC_SD.h"
 
 extern uint16_t SectorsPerClust;
 extern uint16_t FirstDataSector;
 extern uint8_t FAT32_Enable;
 
-class pixel_t
+class color_t
 {
   public:
     uint8_t r, g, b;
@@ -89,5 +86,11 @@ void writeData(uint8_t data);
 void show_BMPs_in_root(void);
 void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr);
 void SPI_send_pixels_666(uint16_t pixel_count, uint8_t *data_ptr);
+
+//There is a 1-byte buffer in front of the the SPI transmit shift
+//register. If that register is empty, we can write.
+#define M_SPI_WRITE_WAIT(x)  while(0==(REG_SERCOM4_SPI_INTFLAG&0x1)); REG_SERCOM4_SPI_DATA=(x)
+//If we know it is empty, we do not need to check
+#define M_SPI_WRITE(x)       REG_SERCOM4_SPI_DATA=(x)
 
 #endif /* __ATMEGA328_H__ */
