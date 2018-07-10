@@ -10,6 +10,8 @@
     "xtree": "cpp",
     "xutility": "cpp",
     "istream": "cpp",
-    "xlocale": "cpp"
+    "xlocale": "cpp",
+    "functional": "cpp",
+    "xiosbase": "cpp"
   }
 }

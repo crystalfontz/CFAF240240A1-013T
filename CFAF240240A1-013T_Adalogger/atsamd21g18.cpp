@@ -2,7 +2,40 @@
 #include "st7789h2.h"
 #include "atsamd21g18.h"
 
-// **************************************************
+/*******************************************************************************
+ * \brief Initialize the microprocessor
+ * 
+ * Readies the micro to write to a display.
+ ******************************************************************************/
+void hostInit(void)
+{
+  REG_PORT_DIRSET0 = (LCD_CS | LCD_RESET);
+  REG_PORT_DIRSET1 = (LCD_IM3 | LCD_RS);
+  
+  SET_IM3;  //SDI/SDO on different pins
+  //CLR_IM3; //SDI/SDO share MISO
+  
+  //Drive the ports to a reasonable starting state.
+  CLR_RESET;  //Put the display controller into reset
+  SET_CS; // Deselect the display controller
+  CLR_RS; // Select the command register
+}
+/*******************************************************************************
+ * \brief Cycles the display's reset pin to ensure the display is ready
+ ******************************************************************************/
+void reset_display(void)
+{
+	CLR_RESET;  //Put the display controller into reset
+	delay(10);
+	SET_RESET;  //Take the display controller out of reset
+	delay(10);
+}
+/*******************************************************************************
+ * \brief Reads the images on the SD card and writes them to the display
+ * 
+ * Requires tweaking to ensure the file size is correct for the display
+ * being written to
+ ******************************************************************************/
 void show_BMPs_in_root(void)
 {
   Serial.println("Showing BMPs from uSD Card");
@@ -44,6 +77,7 @@ void show_BMPs_in_root(void)
             //Bitmap file happens to match the LCD 1:1. Nice.
             
             setDisplayWindow(0,0,239,239);
+            SET_CS; // Deselect the display controller
 
             //Since we are limited in memory, break the image up
             //into 24 sections, each one 10 lines.
@@ -59,7 +93,7 @@ void show_BMPs_in_root(void)
               // This takes about 26mS to read in the 7200 bytes
               // ~2,215,384 Hz Thoughput
               bmp_file.read(uSDLine, width*3*lines_per_section);
-              //Now write this third to the TFT
+              //Now write this section to the TFT
               SPI_send_pixels_666(width*lines_per_section, uSDLine);
               }
           }
@@ -79,160 +113,22 @@ void show_BMPs_in_root(void)
   //Release the root directory file handle
   root_dir.close();
 }
-// **************************************************
-#if (0)
-void pictureSlideShow()
-{
-	uint8_t i;              //loop variable
-	uint16_t j;             //loop variable
-	uint32_t p;             //cluster
-	uint16_t *buffer;       //buffer
-	uint16_t pics = 1;
-	uint16_t totalFiles = 0;
-	uint16_t slideshowFlag = 1;
-	uint8_t sector;
-	uint32_t pixels;
-	unsigned char * PATH = "\\batch";
-
-	Search(PATH, &PictureInfo, &totalFiles);
-
-	if (totalFiles == 0)
-	{
-		return;
-	}
-
-	if(!(buffer = malloc(512)))
-	{
-		return;
-	}
-	
-	do{
-		clearScreen(); // BLACK
-		//find the file
-		Search(PATH, &PictureInfo, &pics);
-		
-		//the first cluster of the file
-		p = PictureInfo.deStartCluster + (((uint32_t)PictureInfo.deHighClust) << 16);
-		
-		sector = 0;
-
-		//read a sector
-		FAT_LoadPartCluster(p, sector, buffer);
-
-		// total # of pixels to fill
-		pixels = (uint32_t) 240 * 240;
-
-		// byte count
-		j = 0; 
-	
-		while(pixels > 0)
-		{
-			writeColor(buffer[j]);  // write 16 bits
-			pixels--;               // which is one pixel
-			
-			j++;                    // increment word count
-			if (j == 256)           // time for a new sector
-			{
-				sector++;
-				if (sector == SectorsPerClust)
-				{
-					p = FAT_NextCluster(p);	// read next cluster
-					sector = 0;
-				}
-
-				FAT_LoadPartCluster(p, sector, buffer);	// read a sector
-				j = 0;
-			}
-		}
-
-		if(slideshowFlag)
-		{
-			for (i = 0; i < 3; i++)	// delay for a while
-			{
-				delay(0xFFFF);
-			}
-
-			pics++;					// increment picture number
-			if (pics > totalFiles)	// if last
-			{
-				pics = 1;			// wrap around
-			}
-
-		}
-	} while(slideshowFlag);
-	
-	free(buffer);
-}
-#endif //(SD_ENABLED)
-// **************************************************
-
-//============================================================================
-// This function transfers data, in one stream. Slightly
-// optimized to do index operations during SPI transfers.
-void SPI_send_pixels_666(uint16_t pixel_count, uint8_t *data_ptr)
-{
-  color_t color;
-
-  // Select the LCD's data register
-  SET_RS;
-  // Select the LCD controller
-  CLR_CS;
-
-  // This takes 4.82mS to ship out the 7200 bytes
-  // ~11,950,207 Hz
-  while(pixel_count)
-  {
-
-    //Load the byte
-    color.b=*data_ptr++;
-    color.g=*data_ptr++;
-    color.r=*data_ptr++;
-    
-#if(1)
-    M_SPI_WRITE_WAIT(color.r);
-    //M_SPI_WRITE_WAIT(*data_ptr++);
-    M_SPI_WRITE_WAIT(color.g);
-    M_SPI_WRITE_WAIT(color.b);
-
-    //count this pixel
-    pixel_count--;
-#else
-    //Send the R byte out.
-    REG_SERCOM4_SPI_DATA = color.r;
-    //Now that we have done all we can do, wait for the transfer to finish.
-    while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
-
-    //Send the G out.
-    REG_SERCOM4_SPI_DATA = color.g;
-    //Now that we have done all we can do, wait for the transfer to finish.
-    while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
-    
-    //Send the B out.
-    REG_SERCOM4_SPI_DATA = color.b;
-
-    //count this pixel
-    pixel_count--;
-
-    //Now that we have done all we can do, wait for the transfer to finish.
-    while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
-#endif // 0
-  }
-  
-  while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
-  // Deselect the LCD controller
-  SET_CS;
-}
-
+/*******************************************************************************
+ * \brief Writes an array to the display in 565 mode
+ * 
+ * The information starts at data_ptr and continues for a number of pixels
+ * equal to pixel_count
+ ******************************************************************************/
 void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
-  {
+{
+  // This function transfers data, in one stream. Slightly
+  // optimized to do index operations during SPI transfers.
   color_t color;
   uint8_t first_half, second_half;
 
-  // Select the OLED's data register
-  SET_RS;
-  // Select the OLED controller
-  CLR_CS;
-
+  SET_RS; // Select the data register
+  CLR_CS; // Select the display controller
+  
   //Load the first pixel. BMPs BGR format
   color.b=*data_ptr;
   data_ptr++;
@@ -275,42 +171,67 @@ void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
     }
   //Wait for the final transfer to complete before we bang on CS.
   while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
-  // Deselect the OLED controller
-  SET_CS;    
-  }
-//================================================================================
-void reset_display(void)
-{
-	CLR_RESET;
-	delay(10);
-	SET_RESET;
-	delay(10);
+  //SET_CS; // Deselect the display controller
 }
-//================================================================================
+/*******************************************************************************
+ * \brief Writes an array to the display in 666 mode
+ * 
+ * The information starts at data_ptr and continues for a number of pixels
+ * equal to pixel_count
+ ******************************************************************************/
+void SPI_send_pixels_666(uint16_t pixel_count, uint8_t *data_ptr)
+{
+  // Ensure this display is selected after having just read from the uSD card.
+  CLR_CS; // Select the display controller
+  // This function transfers data, in one stream.
+  color_t color;
+
+  SET_RS; // Select the data register
+
+  // This takes 4.82mS to ship out the 7200 bytes
+  // ~11,950,207 Hz
+  while(pixel_count)
+  {
+
+    //Load the byte
+    color.b=*data_ptr++;
+    color.g=*data_ptr++;
+    color.r=*data_ptr++;
+    
+    M_SPI_WRITE_WAIT(color.r);
+    M_SPI_WRITE_WAIT(color.g);
+    M_SPI_WRITE_WAIT(color.b);
+
+    //count this pixel
+    pixel_count--;
+  }
+  
+  while (0 == (REG_SERCOM4_SPI_INTFLAG & 0x2));
+  SET_CS; // Deselect the display controller
+}
+/*******************************************************************************
+ * \brief Writes a command byte to the display
+ ******************************************************************************/
 void writeCommand(uint8_t command)
 {
-	// Select the LCD's command register
-	CLR_RS;
-	// Select the LCD controller
-	CLR_CS;
+	CLR_CS; // Select the display controller
+	CLR_RS; // Select the command register
 
 	//Send the command via SPI:
 	SPI.transfer(command);
-	//deselect the controller
-	SET_CS;
+	//SET_CS; // Deselect the display controller
 }
-//================================================================================
+/*******************************************************************************
+ * \brief Writes a data byte to the display
+ ******************************************************************************/
 void writeData(uint8_t data)
 {
-	//Select the LCD's data register
-	SET_RS;
-	//Select the LCD controller
-	CLR_CS;
-	//Send the command via SPI:
+	CLR_CS; // Select the display controller
+	SET_RS; // Select the data register
+  //Send the command via SPI:
 	SPI.transfer(data);
 
-	// Deselect the LCD controller
-	SET_CS;
+	//SET_CS; // Deselect the display controller
 }
 //================================================================================
 // extern "C" char *sbrk(int i);

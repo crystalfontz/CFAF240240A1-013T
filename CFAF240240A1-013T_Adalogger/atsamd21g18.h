@@ -1,13 +1,9 @@
-#ifndef __ATMEGA328_H__
-#define __ATMEGA328_H__
+#ifndef __ATSAMD21G18_H__
+#define __ATSAMD21G18_H__
 
 #include <Arduino.h>
 #include <SD.h>
 #include <avr/io.h>
-
-extern uint16_t SectorsPerClust;
-extern uint16_t FirstDataSector;
-extern uint8_t FAT32_Enable;
 
 class color_t
 {
@@ -15,13 +11,10 @@ class color_t
     uint8_t r, g, b;
 };
 
-// struct FileInfoStruct FileInfo;
-// struct direntry PictureInfo;
-
-//============================================================================
+/******************************************************************************/
 //
 // LCD SPI & control lines
-//   ARD   | Port | LCD                      | Wire
+//   ARD   | Port | LCD                      | Wire Color
 // --------+------+--------------------------+------------
 //  #4/D4  |  PD4 | LCD_EN                   |
 //  #4/D5  |  PD5 | TE (Input)               |
@@ -71,26 +64,20 @@ class color_t
 #define CLR_SCK   (REG_PORT_OUT1 &= ~(LCD_SCK))
 #define SET_SCK   (REG_PORT_OUT1 |= LCD_SCK)
 
-//============================================================================
-
-// #define LCD_BL  PC0	//Backlight pin for funsies, I mean testing
-// #define BL_OFF PORTC &= ~(1<<LCD_BL);
-// #define BL_ON  PORTC |=  (1<<LCD_BL);
-
-//extern void clearScreen(void);
-
-//void delay(uint16_t t);
-void pictureSlideShow();
-void writeCommand(uint8_t command);
-void writeData(uint8_t data);
+/******************************************************************************/
+void hostInit(void);
+void reset_display(void);
 void show_BMPs_in_root(void);
 void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr);
 void SPI_send_pixels_666(uint16_t pixel_count, uint8_t *data_ptr);
-
+void writeCommand(uint8_t command);
+void writeData(uint8_t data);
+/******************************************************************************/
 //There is a 1-byte buffer in front of the the SPI transmit shift
-//register. If that register is empty, we can write.
-#define M_SPI_WRITE_WAIT(x)  while(0==(REG_SERCOM4_SPI_INTFLAG&0x1)); REG_SERCOM4_SPI_DATA=(x)
 //If we know it is empty, we do not need to check
 #define M_SPI_WRITE(x)       REG_SERCOM4_SPI_DATA=(x)
-
-#endif /* __ATMEGA328_H__ */
+//register. If that register is empty, we can write.
+#define M_SPI_WRITE_WAIT(x)  while(0==(REG_SERCOM4_SPI_INTFLAG&0x1)); M_SPI_WRITE(x)
+//If we are done writing but before we make state changes
+#define M_SPI_WRITE_DONE(x)  M_SPI_WRITE_WAIT(x); while(0==(REG_SERCOM4_SPI_INTFLAG&0x2));
+#endif /* __ATSAMD21G18_H__ */

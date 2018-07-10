@@ -5,6 +5,7 @@
 #include <SD.h>
 #include <avr/io.h>
 #include "atsamd21g18.h"
+
 //Header file information for font structure definitions.
 #if 1
 typedef struct
@@ -56,6 +57,23 @@ typedef struct
   	*fd;
   }__attribute__ ((__packed__)) FONT_HEADER;
 
+typedef struct font_t
+{
+  color_t foreground = { 0xFF, 0xFF, 0xFF };
+  color_t background = { 0x00, 0x00, 0x00 };
+  bool transparent = false;
+  bool proportional = false;
+
+  const FONT_HEADER *font_set;
+
+  void reset()
+  {
+    foreground = { 0xFF, 0xFF, 0xFF };
+    background = { 0x00, 0x00, 0x00 };
+    transparent = false;
+    proportional = false;
+  }
+};
 //------------
 // Font Stuffs
 //------------
@@ -67,7 +85,7 @@ extern const FONT_HEADER f_08x08;
 extern const FONT_HEADER f_12x16;
 
 //Global single font
-extern const FONT_HEADER *font;
+extern font_t font;
 
 void LCD_Character(uint8_t x0, uint8_t y0, uint8_t c);
 void LCD_String(uint8_t x0, uint8_t y0, const char *s);

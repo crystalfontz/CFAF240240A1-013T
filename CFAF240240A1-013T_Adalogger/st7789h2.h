@@ -53,28 +53,19 @@ const color_t WHITE   = {0xFF, 0xFF, 0xFF}; //#define WHITE   0xFFFFFF
 #define ST7789_PVGAMCTRL  (0xE0)  //Positive Voltage Gamma Control
 #define ST7789_NVGAMCTRL  (0xE1)  //Negative Voltage Gamma Control
 // ********************************************************
-
-void clearScreen(void);
-void displayHome(void);
 void displayInit(void);
 void enterSleep (void);
 void exitSleep (void);
 void Fast_Horizontal_Line(uint16_t x0, uint16_t y, uint16_t x1, color_t color);
-void Fill_OLED_Gamma_Gradient(uint8_t height, uint8_t width);
+void Fill_Display_Gamma_Gradient(uint8_t height, uint8_t width);
 void fillScreen(color_t color);
 void LCD_Circle(uint8_t x0, uint8_t y0, uint8_t radius, color_t color);
-void OLED_Line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, color_t color);
+void drawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, color_t color);
 void Put_Pixel(uint8_t x, uint8_t y, color_t color);
-void Put_Pixel_Raw(uint8_t x, uint8_t y, uint8_t R, color_t color);
-//void Set_LCD_for_write_at_X_Y(uint8_t x, uint8_t y);
 void setDisplayWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
 void setInterface(void);
-//void writeColor(uint32_t color);
 void writeColor(color_t color);
-void writeColorBars(uint8_t height, uint8_t width);
-void SPI_sendCommand(uint8_t command);
-void SPI_sendData(uint8_t data);
-void set_raw_XY(uint8_t x,uint8_t y);
+void writeColorBars(uint8_t width, uint8_t height);
 
 //
 // Customer code after this line

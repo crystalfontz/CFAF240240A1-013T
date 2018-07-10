@@ -65,18 +65,7 @@ void setup()
   Serial.begin(9600);
   Serial.println("setup()");
 
-  REG_PORT_DIRSET1 = (LCD_IM3 | LCD_RS);
-  REG_PORT_DIRSET0 = (LCD_CS | LCD_RESET);
-  
-  SET_IM3;  //SDI/SDO on different pins
-  //CLR_IM3; //SDI/SDO share MISO
-  
-  //Drive the ports to a reasonable starting state.
-  CLR_RESET;  //Active low
-  SET_CS;     //Active low
-  CLR_RS;     //Command mode
-  // CLR_MOSI;
-  // CLR_SCK;
+  hostInit();
 
   // For the Seeduino library I am using, the default speed of SPI_HALF_SPEED
   // set in C:\Program Files (x86)\Arduino\libraries\SD\src\SD.cpp
@@ -137,40 +126,15 @@ void setup()
 //============================================================================
 void loop()
 {
-  while(1)
-  {
-  font = &f_12x16;
-  Serial.println("Writing 12x16");
-  LCD_Character(12,16,'A');
-  LCD_Character(12+12,16,'!');
-  LCD_Character(12+12+12,16,'C');
-  LCD_Character(12+12+12+12,16,'=');
-  LCD_Character(12+12+12+12+12,16,'\"');
+  Serial.println("--> Top of the Loop <--");
 
-  font = &f_08x08;
-  Serial.println("Writing 08x08");
-  LCD_Character(120,160,'A');
-  LCD_Character(120+8,160,'!');
-  LCD_Character(120+8+8,160,'C');
-
-  LCD_String(40, 40, "Test String Little");
-
-  font = &f_12x16;
-  LCD_String(50, 50, "Test String Big");
-  LCD_String(130, 70, "Test String Big");
-
-
-  delay(1000);
-  }
-
-  #if 1
   writeColorBars(240, 240);
   delay(1000);
 
-  Fill_OLED_Gamma_Gradient(240, 240);
-  delay(1000);
+#if(1)
 
-  show_BMPs_in_root();
+  Fill_Display_Gamma_Gradient(240, 240);
+  delay(1000);
 
   Serial.println("Writing a black screen");
   fillScreen(BLACK);
@@ -200,38 +164,80 @@ void loop()
     LCD_Circle(i+2, 64, i, tempColor);
   }
   delay(1000);
-  #endif
+#endif
+  // Enable to demonstrate writing fonts to the screen
+#if(1)
+  font.reset();
+  font.font_set = &f_12x16;
+  font.background = BLACK;
+  Serial.println("Writing 12x16");
+  LCD_Character(12+(12*0),223,'B');
+  LCD_Character(12+(12*1),223,'i');
+  LCD_Character(12+(12*2),223,'g');
 
-  while(1)
+  font.transparent = true;
+  LCD_String(12, 206, "Big Font");
+
+  Serial.println("Writing 08x08");
+  font.reset();
+  font.font_set = &f_08x08;
+  font.background = GREEN;
+  LCD_String(152, 1, "Little Font");
+  // LCD_Character(120,160,'A');
+  // LCD_Character(120+8,160,'!');
+  // LCD_Character(120+8+8,160,'C');
+
+  // LCD_String(40, 40, "Test String Little");
+
+  font.reset();
+  font.proportional = true;
+  font.foreground = RED;
+  LCD_String(150, 50, "proportional");
+
+  font.reset();
+  font.font_set = &f_08x08;
+  font.foreground = RED;
+  font.background = WHITE;
+  LCD_String(10, 63-3, "Antman");
+  font.transparent = true;
+  LCD_String(10, 63-12, "Antman");
+
+  font.reset();
+  font.font_set = &f_12x16;
+  //font.background = BLUE;
+  //font.transparent = true;
+  for(uint8_t y=0;y<=75;y++)
   {
-    for(uint8_t y=0;y<=75;y++)
-    {
-      LCD_Character(63+(12*0),y+(16*2),'2');
-      LCD_Character(63+(12*1),y+(16*2),'1');
-      LCD_Character(63+(12*2),y+(16*2),'0');
-      LCD_Character(63+(12*3),y+(16*2),'0');
-      LCD_Character(63+(12*4),y+(16*2),'0');
-      //delay(100);
-      LCD_Character(63+(12*0),y+(16*1),'2');
-      LCD_Character(63+(12*1),y+(16*1),'2');
-      LCD_Character(63+(12*2),y+(16*1),'0');
-      LCD_Character(63+(12*3),y+(16*1),'0');
-      LCD_Character(63+(12*4),y+(16*1),'0');
-      //delay(100);
+#if(0)
+    LCD_Character(63+(12*0), y+(16*2), '2');
+    LCD_Character(63+(12*1), y+(16*2), '1');
+    LCD_Character(63+(12*2), y+(16*2), '0');
+    LCD_Character(63+(12*3), y+(16*2), '0');
+    LCD_Character(63+(12*4), y+(16*2), '0');
 
-      LCD_Character(63+(12*0),y,'2');
-      LCD_Character(63+(12*0),y,'3');
-      LCD_Character(63+(12*0),y,'0');
-      LCD_Character(63+(12*0),y,'0');
-      LCD_Character(63+(12*0),y,'0');
-      //delay(100);
-    }
+    LCD_Character(63+(12*0), y+(16*1), '2');
+    LCD_Character(63+(12*1), y+(16*1), '2');
+    LCD_Character(63+(12*2), y+(16*1), '0');
+    LCD_Character(63+(12*3), y+(16*1), '0');
+    LCD_Character(63+(12*4), y+(16*1), '0');
+
+    LCD_Character(63+(12*0), y+(16*0), '2');
+    LCD_Character(63+(12*1), y+(16*0), '3');
+    LCD_Character(63+(12*2), y+(16*0), '0');
+    LCD_Character(63+(12*3), y+(16*0), '0');
+    LCD_Character(63+(12*4), y+(16*0), '0');
+#else
+    LCD_String(63+(12*0), y+(16*2), "21000");
+    LCD_String(63+(12*0), y+(16*1), "22000");
+    LCD_String(63+(12*0), y+(16*0), "23000");
+#endif
   }
 
-  font = &f_08x08;
-  //transparent = false;  // Need to change scope for this to work
-  LCD_Character(20,63,'A');
-  LCD_Character(20+12,63,'Z');
+#endif
 
+#if(1)
+  show_BMPs_in_root();
+#endif
+  delay(1000);
 } // void loop()
 //============================================================================
