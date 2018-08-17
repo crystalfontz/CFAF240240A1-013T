@@ -5,12 +5,14 @@
  ******************************************************************************/
 void displayInit(void)
 {
-  CLR_RESET;  //Put the display controller into reset
-  delay(1);//10µS min
   SET_RESET;  //Take the display controller out of reset
-  delay(150);//120mS max
+  delay(10);  //10µS min
+  CLR_RESET;  //Put the display controller into reset
+  delay(10);  //10µS min
+  SET_RESET;  //Take the display controller out of reset
+  delay(130); //130mS max
 
-  //SLPOUT (11h): Sleep Out ("Sleep Out" is chingrish for "wake")
+  //Sleep Out ("Sleep Out" should be called "wake")
   //The DC/DC converter is enabled, Internal display oscillator
   //is started, and panel scanning is started.
   writeCommand(ST7789_SLPOUT);
@@ -18,30 +20,36 @@ void displayInit(void)
 
   //-----------------------------Display setting--------------------------------
   writeCommand(ST7789_MADCTL); //Page 215
-  // Bit D7- Page Address Order
+  // Bit D7 - MY - Page Address Order
   // “0” = Top to Bottom (When MADCTL D7=”0”).
   // “1” = Bottom to Top (When MADCTL D7=”1”).
-  // Bit D6- Column Address Order
+  #define MY 0
+  // Bit D6 - MX - Column Address Order
   // “0” = Left to Right (When MADCTL D6=”0”).
   // “1” = Right to Left (When MADCTL D6=”1”).
-  // Bit D5- Page/Column Order
+  #define MX 1
+  // Bit D5 - MV - Page/Column Order
   // “0” = Normal Mode (When MADCTL D5=”0”).
   // “1” = Reverse Mode (When MADCTL D5=”1”)
   // Note: Bits D7 to D5, alse refer to section 8.12 Address Control
-  // Bit D4- Line Address Order
+  #define MV 0
+  // Bit D4 - ML - Line Address Order
   // “0” = LCD Refresh Top to Bottom (When MADCTL D4=”0”)
   // “1” = LCD Refresh Bottom to Top (When MADCTL D4=”1”)
-  // Bit D3- RGB/BGR Order
+  #define ML 0
+  // Bit D3 - RGB - RGB/BGR Order
   // “0” = RGB (When MADCTL D3=”0”)
   // “1” = BGR (When MADCTL D3=”1”)
-  // Bit D2- Display Data Latch Data Order
+  #define RGB 0
+  // Bit D2 - MH - Display Data Latch Data Order
   // “0” = LCD Refresh Left to Right (When MADCTL D2=”0”)
   // “1” = LCD Refresh Right to Left (When MADCTL D2=”1”)  
+  #define MH 0
   //writeData(0x00); //DEFAULT
   //writeData(0x48); //TEST
-  writeData(0x40);
+  //writeData(0x40);  //Works well
+  writeData((MY << 7) | (MX << 6) | (MV << 5) | (ML << 4) | (RGB << 3) | (MH << 2));  //Works well
 
-  //Address control 
   writeCommand(ST7789_COLMOD); //Interface pixel format Pg 224
   writeData(0x06);
   
@@ -61,7 +69,7 @@ void displayInit(void)
   writeData(0xEF);
 
   //------------------------- Frame rate setting-------------------
-	writeCommand(ST7789_PORCTRL);	// Porch Control
+  writeCommand(ST7789_PORCTRL);	// Porch Control
 	writeData(0x0C);
 	writeData(0x0C);
 	writeData(0x00);
@@ -72,7 +80,6 @@ void displayInit(void)
 	writeData(0x35);							//VGH:13.26/VGL:-10.43
 
   //----------------------- Power setting-------------------
-
 	writeCommand(ST7789_VCOMS);	//VCOM Setting
   writeData(0x1F);     //VCOM = 0.875V
 
@@ -133,48 +140,67 @@ void displayInit(void)
   writeCommand(ST7789_TEOFF);
 
   //Enable Tearing
-	//writeCommand(ST7789_TEON);
-  //writeData(0x01); // ON
+	// writeCommand(ST7789_TEON);
+  // writeData(0x00); // ON
   // When TEM =’0’: The Tearing Effect output line consists of V-Blanking information only
   // When TEM =’1’: The Tearing Effect output Line consists of both V-Blanking and H-Blanking information
 
+  //CABC Setup
+  //Write Display Brightness
+  writeCommand(ST7789_WRDISBV); //Defaults to 0000h
+  writeData(0xFF); // 8 bit display brightness 0x00 = lowest, 0xFF = highest
+
+  //Write CTRL Display
+  writeCommand(ST7789_WRCTRLD);
+  // BCTRL: Brightness Control Block On/Off, This bit is always used to switch brightness for display.
+  // 0 = Off (Brightness register are 00h, DBV[7:0])
+  // 1 = On (Brightness register are active, according to the other parameters.)
+  #define BCTRL 1
+  // DD: Display Dimming (Only for manual brightness setting)
+  // DD = 0: Display Dimming is off.
+  // DD = 1: Display Dimming is on.
+  #define DD    1
+  // BL: Backlight Control On/Off
+  // 0 = Off (Completely turn off backlight circuit. Control lines must be low.)
+  // 1 = On
+  #define BL    1
+  writeData((BCTRL << 5) | (DD << 3) | (BL << 2));
+
   //Content Adaptive Brightness controller
 	writeCommand(ST7789_CABCCTRL); //Defaults to 0x00
-  #define LEDONREV 0
   // LEDONREV: Reverse the status of LED_ON:
   // “0”: keep the status of LED_ON.
   // “1”: reverse the status of LED_ON.
-  #define DPOFPWM  0
+  #define LEDONREV 0
   // DPOFPWM: initial state control of LEDPWM.
   // “0”: The initial state of LEDPWM is low.
   // “1”: The initial state of LEDPWM is high.
-  #define PWMFIX   0
+  #define DPOFPWM  0
   // PWMFIX: LEDPWM fix control.
   // “0”: LEDPWM control by CABC.
   // “1”: fix LEDPWM in “ON” status.
-  #define PWMPOL   0
+  #define PWMFIX   0
   // PWMPOL: LEDPWM polarity control.
   // “0”: polarity high.
   // “1”: polarity low.
+  #define PWMPOL   0
   writeData((LEDONREV << 3) | (DPOFPWM << 2) | (PWMFIX << 1) | (PWMPOL << 0));
 
 	writeCommand(ST7789_WRCACE); //Defaults to 0x00
-  #define CECTRL 0
   // CECTRL: Color Enhancement Control Bit:
   // CECTRL=0: Color Enhancement Off.
   // CECTRL=1: Color Enhancement On.
+  #define CECTRL 1
 
-  #define CE1 0
-  #define CE0 0
   // |CE1 | CE0 | Color enhancement level
   // ------------------------------------
   // | 0  | 0   | Low enhancement
   // | 0  | 1   | Medium enhancement
   // | 1  | 1   | High enhancement
   // ------------------------------------
+  #define CE1 1
+  #define CE0 1
   
-  #define C1 0
-  #define C0 0
   // | C1 | C0 | Function
   // ---------------------------------
   // | 0  | 0  | Off
@@ -182,13 +208,15 @@ void displayInit(void)
   // | 1  | 0  | Still Picture
   // | 1  | 1  | Moving Image
   // ---------------------------------
+  #define C1 1
+  #define C0 1
   writeData((CECTRL << 7) | (CE1 << 5) | (CE0 << 4) | (C1 << 1) | (C0 << 0));
 
   //
   writeCommand(ST7789_WRCABCMB); //Defaults to 0x00
   //  - This command is used to set the minimum brightness value of the display for CABC function.
   //  -In principle relationship is that 00h value means the lowest brightness for CABC and FFh value means the brightness for CABC  
-  writeData(0xFF);
+  writeData(0x00);
 
   setDisplayWindow(0, 0, 239, 239);
   //--------------------
@@ -202,6 +230,7 @@ void enterSleep (void)
 	writeCommand(ST7789_DISPOFF);	// Display Off
 	delay(20);
 	writeCommand(ST7789_SLPIN);	// Sleep In (Low power mode)
+	delay(120);
 }
 /*******************************************************************************
  * \brief Send command to exit sleep mode and turn on the display
@@ -229,9 +258,9 @@ void exitSleep (void)
  ******************************************************************************/
 void Fast_Horizontal_Line(uint16_t x0, uint16_t y, uint16_t x1, color_t color)
 {
-  uint16_t temp;
   if(x1 < x0)
   {
+    uint16_t temp;
     mSwap(x0, x1, temp);
   }
   setDisplayWindow(x0, y, x1, y);
@@ -324,65 +353,16 @@ void setDisplayWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
   // right before a data write
 }
 /*******************************************************************************
- * \brief Sets the IM pins (interface select) using GPIOs
- * 
- * Written for a microcontroller with enough spare pins
- * 
- * Ununsed in this example
- ******************************************************************************/
-void setInterface(void)
-{
-	//Interface select
-	uint8_t IM[4];
-
-  #ifdef MCU8BIT
-    PORTA = 0x00;	//Pulled low if not in use
-    IM[0] = 0;
-    IM[1] = 1;
-    IM[2] = 0;
-    IM[3] = 0;
-  #endif
-  #ifdef MCU16BIT
-    IM[0] = 0;
-    IM[1] = 0;
-    IM[2] = 0;
-    IM[3] = 0;
-  #endif
-
-	//PORTF is directly mapped to IM[0:3]
-	//PORTF = (IM[3]<<3 | IM[2]<<2 | IM[1]<<1 | IM[0]<<0);
-}
-/*******************************************************************************
  * \brief Writes a color triple to the display
  ******************************************************************************/
 void writeColor(color_t color)
 {
-  // #ifdef MCU16BIT	
-  // 	SET_CD;
-  // 	PORTE=color>>8;
-  // 	PORTA=color;
-  // 	CLR_WR;
-  // 	SET_WR;
-  // #endif
-  // #ifdef MCU8BIT
-  // 	SET_CD;
-  //  	CLR_WR;
-  //  	PORTE=color>>8;
-  //  	SET_WR;
-  // 	PORTE=color;
-  // 	CLR_WR;
-  // 	SET_WR;
-  // #endif
-
-  //CLR_CS; // Select the display controller
-  
   SET_RS; // Select the data register
   //Send the command via SPI:
   M_SPI_WRITE_WAIT(color.r);
   M_SPI_WRITE_WAIT(color.g);
   M_SPI_WRITE_DONE(color.b);
   // Deselect the LCD controller
-  //SET_CS; // Deselect the display controller
 }
 /*******************************************************************************
  * \brief Fills the screen with color bars
@@ -392,7 +372,7 @@ void writeColor(color_t color)
 void writeColorBars(uint8_t width, uint8_t height)
 {
   uint8_t barHeight = height / 8; // 240 / 8 = 30
-	uint8_t i,j;
+	uint8_t i, j;
 
   Serial.print("Writing color bars for ");
   Serial.print(width, DEC);
@@ -478,21 +458,14 @@ void Fill_Display_Gamma_Gradient(uint8_t height, uint8_t width)
 void drawLine(uint16_t x0, uint16_t y0,
               uint16_t x1, uint16_t y1, color_t color)
 {
-  int16_t dx;
-  int16_t sx;
-  int16_t dy;
-  int16_t sy;
-  int16_t err;
-  int16_t e2;
-
   //General case
   if (y0 != y1)
   {
-    dx = abs((int16_t )x1 - (int16_t )x0);
-    sx = x0 < x1 ? 1 : -1;
-    dy = abs((int16_t )y1 - (int16_t )y0);
-    sy = y0 < y1 ? 1 : -1;
-    err = (dx > dy ? dx : -dy) / 2;
+    int16_t dx = abs((int16_t )x1 - (int16_t )x0);
+    int16_t sx = x0 < x1 ? 1 : -1;
+    int16_t dy = abs((int16_t )y1 - (int16_t )y0);
+    int16_t sy = y0 < y1 ? 1 : -1;
+    int16_t err = (dx > dy ? dx : -dy) / 2;
 
     for (;;)
     {
@@ -501,7 +474,7 @@ void drawLine(uint16_t x0, uint16_t y0,
       {
         break;
       }
-      e2 = err;
+      int16_t e2 = err;
       if (e2 > -dx)
       {
         err -= dy;
@@ -531,8 +504,8 @@ void Put_Pixel(uint8_t x, uint8_t y, color_t color)
 
   SET_RS; // Select the data register
   M_SPI_WRITE_WAIT(color.r);
-  M_SPI_WRITE_WAIT(color.b);
   M_SPI_WRITE_DONE(color.g);
+  M_SPI_WRITE_WAIT(color.b);
 }
 /*******************************************************************************
  * \brief Draws a circle of a specified color centered at [x, y] with a specified radius

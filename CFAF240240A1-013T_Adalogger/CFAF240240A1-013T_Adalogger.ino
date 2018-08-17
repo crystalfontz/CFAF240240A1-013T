@@ -42,7 +42,6 @@
 //   https://www.crystalfontz.com/product/cfaf240240a1013t
 //
 //============================================================================
-#include <Arduino.h>
 #include <SPI.h>
 // C:\Program Files (x86)\Arduino\hardware\arduino\avr\libraries\SPI\src\SPI.cpp
 // C:\Program Files (x86)\Arduino\hardware\arduino\avr\libraries\SPI\src\SPI.h
@@ -131,10 +130,10 @@ void loop()
   writeColorBars(240, 240);
   delay(1000);
 
-#if(1)
-
   Fill_Display_Gamma_Gradient(240, 240);
   delay(1000);
+
+#if(1)  // Enable to demonstrate basic tests
 
   Serial.println("Writing a black screen");
   fillScreen(BLACK);
@@ -165,8 +164,7 @@ void loop()
   }
   delay(1000);
 #endif
-  // Enable to demonstrate writing fonts to the screen
-#if(1)
+#if(1)  // Enable to demonstrate writing fonts to the screen
   font.reset();
   font.font_set = &f_12x16;
   font.background = BLACK;
@@ -208,7 +206,7 @@ void loop()
   //font.transparent = true;
   for(uint8_t y=0;y<=75;y++)
   {
-#if(0)
+    #if(0)
     LCD_Character(63+(12*0), y+(16*2), '2');
     LCD_Character(63+(12*1), y+(16*2), '1');
     LCD_Character(63+(12*2), y+(16*2), '0');
@@ -226,11 +224,11 @@ void loop()
     LCD_Character(63+(12*2), y+(16*0), '0');
     LCD_Character(63+(12*3), y+(16*0), '0');
     LCD_Character(63+(12*4), y+(16*0), '0');
-#else
+    #else
     LCD_String(63+(12*0), y+(16*2), "21000");
     LCD_String(63+(12*0), y+(16*1), "22000");
     LCD_String(63+(12*0), y+(16*0), "23000");
-#endif
+    #endif
   }
 
 #endif

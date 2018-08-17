@@ -1,6 +1,9 @@
 #ifndef _FONTS_H_
 #define _FONTS_H_
 
+#include <Arduino.h>
+#include <SD.h>
+#include <avr/io.h>
 #include "atsamd21g18.h"
 
 //Header file information for font structure definitions.

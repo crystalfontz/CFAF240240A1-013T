@@ -7,8 +7,6 @@
  *  Author: max
  */ 
 
-#include <Arduino.h>
-#include <SPI.h>
 #include "atsamd21g18.h"
 
 // color definitions
@@ -38,6 +36,9 @@ const color_t WHITE   = {0xFF, 0xFF, 0xFF}; //#define WHITE   0xFFFFFF
 #define ST7789_TEON       (0x35)  //Tearing Effect Line On
 #define ST7789_MADCTL     (0x36)  //Memory Data Access Control
 #define ST7789_COLMOD     (0x3A)  //Interface Pixel Format
+#define ST7789_STE        (0x44)  //Set Tear Scanline
+#define ST7789_WRDISBV    (0x51)  //Write Display Brightness
+#define ST7789_WRCTRLD    (0x53)  //Write CTRL Display
 #define ST7789_WRCACE     (0x55)  //Write Content Adaptive Brightness Control and Color Enhancement
 #define ST7789_WRCABCMB   (0x5E)  //Write CABC minimum brightness
 #define ST7789_PORCTRL    (0xB2)  //Porch control

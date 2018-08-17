@@ -55,6 +55,9 @@
 
 #include "atmega328.h"
 #include "st7789h2.h"
+#include "fonts.h"
+#include "font_08x08.h"
+#include "font_12x16.h"
 
 //============================================================================
 void setup()

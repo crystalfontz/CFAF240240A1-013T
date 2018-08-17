@@ -68,7 +68,7 @@ void show_BMPs_in_root(void)
         {
           //The BMP must be exactly 172854 long
           //(this is correct for 240x240, 24-bit + 54)
-          if(172854 == bmp_file.size())
+          if((172854 == bmp_file.size()) || (172856 == bmp_file.size()))
           {
             Serial.print("Displaying ");
             Serial.println(bmp_file.name());
@@ -85,7 +85,6 @@ void show_BMPs_in_root(void)
             const uint8_t width = 240;
             const uint8_t height = 240;
             const uint8_t lines_per_section = 10;
-            const uint8_t sections = height/lines_per_section;
             static uint8_t uSDLine[width*3*lines_per_section];
             for(uint8_t line = 0; line < height; line+=lines_per_section)
               {
@@ -181,10 +180,11 @@ void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
  ******************************************************************************/
 void SPI_send_pixels_666(uint16_t pixel_count, uint8_t *data_ptr)
 {
-  // Ensure this display is selected after having just read from the uSD card.
-  CLR_CS; // Select the display controller
   // This function transfers data, in one stream.
   color_t color;
+
+  // Ensure this display is selected after having just read from the uSD card.
+  CLR_CS; // Select the display controller
 
   SET_RS; // Select the data register
 
