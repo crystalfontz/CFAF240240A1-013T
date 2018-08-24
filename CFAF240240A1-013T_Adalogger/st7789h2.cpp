@@ -23,16 +23,16 @@ void displayInit(void)
   // Bit D7 - MY - Page Address Order
   // “0” = Top to Bottom (When MADCTL D7=”0”).
   // “1” = Bottom to Top (When MADCTL D7=”1”).
-  #define MY 0
+  #define MY MY_ROTATED
   // Bit D6 - MX - Column Address Order
   // “0” = Left to Right (When MADCTL D6=”0”).
   // “1” = Right to Left (When MADCTL D6=”1”).
-  #define MX 1
+  #define MX MX_ROTATED
   // Bit D5 - MV - Page/Column Order
   // “0” = Normal Mode (When MADCTL D5=”0”).
   // “1” = Reverse Mode (When MADCTL D5=”1”)
   // Note: Bits D7 to D5, alse refer to section 8.12 Address Control
-  #define MV 0
+  #define MV MV_ROTATED
   // Bit D4 - ML - Line Address Order
   // “0” = LCD Refresh Top to Bottom (When MADCTL D4=”0”)
   // “1” = LCD Refresh Bottom to Top (When MADCTL D4=”1”)
@@ -45,10 +45,7 @@ void displayInit(void)
   // “0” = LCD Refresh Left to Right (When MADCTL D2=”0”)
   // “1” = LCD Refresh Right to Left (When MADCTL D2=”1”)  
   #define MH 0
-  //writeData(0x00); //DEFAULT
-  //writeData(0x48); //TEST
-  //writeData(0x40);  //Works well
-  writeData((MY << 7) | (MX << 6) | (MV << 5) | (ML << 4) | (RGB << 3) | (MH << 2));  //Works well
+  writeData((MY << 7) | (MX << 6) | (MV << 5) | (ML << 4) | (RGB << 3) | (MH << 2));
 
   writeCommand(ST7789_COLMOD); //Interface pixel format Pg 224
   writeData(0x06);
@@ -57,16 +54,16 @@ void displayInit(void)
   writeCommand(ST7789_INVON);
 
   writeCommand(ST7789_CASET);
-  writeData(0x00);
-  writeData(0x00);
-  writeData(0x00);
-  writeData(0xEF);
+  writeData(XS15_08);
+  writeData(XS07_00);
+  writeData(XE15_08);
+  writeData(XE07_00);
 
   writeCommand(ST7789_RASET);
-  writeData(0x00);
-  writeData(0x00);
-  writeData(0x00);
-  writeData(0xEF);
+  writeData(YS15_08);
+  writeData(YS07_00);
+  writeData(YE15_08);
+  writeData(YE07_00);
 
   //------------------------- Frame rate setting-------------------
   writeCommand(ST7789_PORCTRL);	// Porch Control
@@ -312,6 +309,9 @@ void setDisplayWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 	CLR_CS; // Select the display controller
   
   //Write the "column address set" command to the LCD
+  //Correct the X coordinates based on our current start value
+  x0 += X_START;
+  x1 += X_START;
   //CASET (2Ah): Column Address Set
   // The value of XS [15:0] and XE [15:0] are referred when RAMWR
   //   command comes.
@@ -328,6 +328,9 @@ void setDisplayWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
   M_SPI_WRITE_DONE(x1);     //End LSB   = XE[ 7:0]
   
   //Write the "row address set" command to the LCD
+  //Correct the Y coordinates based on our current start value
+  y0 += Y_START;
+  y1 += Y_START;
   //RASET (2Bh): Row Address Set
   // The value of YS [15:0] and YE [15:0] are referred when RAMWR
   //   command comes.

@@ -58,6 +58,32 @@
 #include "font_12x16.h"
 
 //============================================================================
+void circleDemo(uint8_t width, uint8_t height)
+{
+  uint8_t w_section = width / 6;
+  uint8_t h_section = height / 6;
+
+  //Draw a cyan circle
+  LCD_Circle(w_section * 3, h_section * 3, (w_section * 3) - 1, CYAN);
+  //Draw a green circle
+  LCD_Circle(w_section * 3, h_section * 3, w_section - 1, GREEN);
+  //Draw a white circle
+  LCD_Circle(w_section * 1, h_section * 3, w_section - 1, WHITE);
+  //Draw a red circle
+  LCD_Circle(w_section * 5, h_section * 3, w_section - 1, RED);
+  //Draw a purple circle
+  LCD_Circle(w_section * 3, h_section * 5, w_section - 1, MAGENTA);
+  //Draw a orange circle
+  LCD_Circle(w_section * 3, h_section * 1, w_section - 1, color_t {0xFF, 0xA5, 0x00});
+  delay(1000);
+
+  Serial.println("draw some circles");
+  for(uint8_t i = 2; i < (w_section * 3); i += 2)
+  {
+    LCD_Circle(i + 2, (h_section * 3), i, color_t {i<<2, 0xFF-(i<<2),0x00});
+  }
+}
+//============================================================================
 void setup()
 {
   //debug console
@@ -127,12 +153,13 @@ void loop()
 {
   Serial.println("--> Top of the Loop <--");
 
+#if(1)
   writeColorBars(240, 240);
   delay(1000);
 
   Fill_Display_Gamma_Gradient(240, 240);
   delay(1000);
-
+#endif
 #if(1)  // Enable to demonstrate basic tests
 
   Serial.println("Writing a black screen");
@@ -140,28 +167,7 @@ void loop()
   delay(500);
 
   Serial.println("Circle tests");
-  //Draw a cyan circle
-  LCD_Circle(64, 64, 63, CYAN);
-  //Draw a green circle
-  LCD_Circle(21, 64, 20, GREEN);
-  //Draw a white circle
-  LCD_Circle(64, 64, 20, WHITE);
-  //Draw a red circle
-  LCD_Circle(107, 64, 20, RED);
-  //Draw a purple circle
-  LCD_Circle(64, 107, 16, MAGENTA);
-  //Draw a orange circle
-  LCD_Circle(64, 21, 14, color_t {0xFF, 0xA5, 0x00});
-  delay(1000);
-
-  Serial.println("draw some circles");
-  color_t tempColor = {0x00, 0x00, 0x00};
-  for(uint8_t i = 2; i < 60; i += 2)
-  {
-    tempColor = {i<<2, 0xff-(i<<2),0x00};
-    //LCD_Circle(i+2, 64, i,i<<2,0xff-(i<<2),0x00);
-    LCD_Circle(i+2, 64, i, tempColor);
-  }
+  circleDemo(240, 240);
   delay(1000);
 #endif
 #if(1)  // Enable to demonstrate writing fonts to the screen
@@ -193,17 +199,7 @@ void loop()
   LCD_String(150, 50, "proportional");
 
   font.reset();
-  font.font_set = &f_08x08;
-  font.foreground = RED;
-  font.background = WHITE;
-  LCD_String(10, 63-3, "Antman");
-  font.transparent = true;
-  LCD_String(10, 63-12, "Antman");
-
-  font.reset();
   font.font_set = &f_12x16;
-  //font.background = BLUE;
-  //font.transparent = true;
   for(uint8_t y=0;y<=75;y++)
   {
     #if(0)

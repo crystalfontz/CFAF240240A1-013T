@@ -106,7 +106,7 @@ void show_BMPs_in_root(void)
       }
       //Release the BMP file handle
       bmp_file.close();
-      delay(2000);
+      delay(2000);  // Wait between each image
     } while(0 == bmp_file);
   }
   //Release the root directory file handle

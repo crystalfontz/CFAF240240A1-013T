@@ -9,6 +9,62 @@
 
 #include "atsamd21g18.h"
 
+//==============================================================================
+//Select your desired rotation here
+//==============================================================================
+#define ROTATE 0
+//==============================================================================
+//These are for comparison against the desired rotation
+#define ROTATE_0 0
+#define ROTATE_90 1
+#define ROTATE_180 2
+#define ROTATE_270 3
+//==============================================================================
+//Based on the selection above set some values
+//==============================================================================
+#if (ROTATE == ROTATE_0)
+  #define X_START (0)
+  #define X_END (0)
+  #define Y_START (80)
+  #define Y_END (319)
+  #define MY_ROTATED 1
+  #define MX_ROTATED 0
+  #define MV_ROTATED 0
+#elif (ROTATE == ROTATE_90)
+  #define X_START (0)
+  #define X_END (0)
+  #define Y_START (0)
+  #define Y_END (239)
+  #define MY_ROTATED 0
+  #define MX_ROTATED 0
+  #define MV_ROTATED 1
+#elif (ROTATE == ROTATE_180)
+  #define X_START (0)
+  #define X_END (0)
+  #define Y_START (0)
+  #define Y_END (239)
+  #define MY_ROTATED 0
+  #define MX_ROTATED 1
+  #define MV_ROTATED 0
+#elif (ROTATE == ROTATE_270)
+  #define X_START (80)
+  #define X_END (319)
+  #define Y_START (00)
+  #define Y_END (239)
+  #define MY_ROTATED 1
+  #define MX_ROTATED 1
+  #define MV_ROTATED 1
+#endif
+//==============================================================================
+#define XS15_08 (X_START >> 8)
+#define XS07_00 (X_START & 0x00FF)
+#define XE15_08 (X_END >> 8)
+#define XE07_00 (X_END & 0x00FF)
+#define YS15_08 (Y_START >> 8)
+#define YS07_00 (Y_START & 0x00FF)
+#define YE15_08 (Y_END >> 8)
+#define YE07_00 (Y_END & 0x00FF)
+
 // color definitions
 const color_t BLACK   = {0x00, 0x00, 0x00}; //#define	BLACK   0x000000
 const color_t BLUE    = {0x00, 0x00, 0xFF}; //#define	BLUE    0x0000FF
