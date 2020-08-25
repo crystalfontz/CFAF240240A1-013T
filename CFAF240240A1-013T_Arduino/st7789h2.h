@@ -12,14 +12,21 @@
 #include "atmega328.h"
 
 // color definitions
-#define	BLACK   0x000000
-#define	BLUE    0x0000FF
-#define	GREEN   0x00FF00
-#define CYAN    0x00FFFF
-#define	RED     0xFF0000
-#define MAGENTA 0xFF00FF
-#define YELLOW  0xFFFF00
-#define WHITE   0xFFFFFF
+#define	BLACK   color_t {0x00,0x00,0x00}
+#define	BLUE    color_t {0x00,0x00,0xFF}
+#define	GREEN   color_t {0x00,0xFF,0x00}
+#define CYAN    color_t {0x00,0xFF,0xFF}
+#define	RED     color_t {0xFF,0x00,0x00}
+#define MAGENTA color_t {0xFF,0x00,0xFF}
+#define YELLOW  color_t {0xFF,0xFF,0x00}
+#define WHITE   color_t {0xFF,0xFF,0xFF}
+
+
+class color_t
+{
+public:
+  uint8_t r, g, b;
+};
 
 
 void clearScreen(void);
@@ -31,6 +38,7 @@ void Fast_Horizontal_Line(uint16_t x0, uint16_t y, uint16_t x1, uint8_t R, uint8
 void Fill_OLED_Gamma_Gradient(uint8_t height, uint8_t width);
 void Fill_LCD(uint8_t R, uint8_t G, uint8_t B);
 void fillScreen(uint32_t color);
+void fillScreen(color_t color);
 void LCD_Circle(uint8_t x0, uint8_t y0, uint8_t radius, uint8_t R, uint8_t G, uint8_t B);
 void OLED_Line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint8_t r, uint8_t g, uint8_t b);
 void Put_Pixel(uint8_t x, uint8_t y, uint8_t R, uint8_t G, uint8_t B);
@@ -38,12 +46,10 @@ void Put_Pixel(uint8_t x, uint8_t y, uint8_t R, uint8_t G, uint8_t B);
 void setDisplayWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
 void setInterface(void);
 void writeColor(uint32_t color);
+void writeColor(color_t color);
 void writeColorBars(uint8_t height, uint8_t width);
 void SPI_sendCommand(uint8_t command);
 void SPI_sendData(uint8_t data);
 
-//
-// Customer code after this line
-//
 
 #endif /* __ST7789H2_H__ */

@@ -1,50 +1,90 @@
 #include "st7789h2.h"
 
+//// ********************************************************
+//// Defines for the ST7789 registers.
+//// ref: https://www.crystalfontz.com/products/document/3277/ST7735_V2.1_20100505.pdf
+//#define ST7789_SLPIN      (0x10)
+//#define ST7789_SLPOUT     (0x11)
+//#define ST7789_INVOFF     (0x20)
+//#define ST7789_INVON      (0x21)
+//#define ST7789_DISPOFF    (0x28)
+//#define ST7789_DISPON     (0x29)
+//#define ST7789_CASET      (0x2A)
+//#define ST7789_RASET      (0x2B)
+//#define ST7789_RAMWR      (0x2C)
+//#define ST7789_MADCTL     (0x36)
+//#define ST7789_COLMOD     (0x3A)
+//#define ST7789_PORCTRL    (0xB2)
+//#define ST7789_GCTRL      (0xB7)
+//#define ST7789_VCOMS      (0xBB)
+//#define ST7789_LCMCTRL    (0xC0)  //LCM Control
+//#define ST7789_VDVVRHEN   (0xC2)  //VDV and VRH Command Enable
+//#define ST7789_VRHS       (0xC3)  //VRH Set
+//#define ST7789_VDVSET     (0xC4)  //VDV Set
+//#define ST7789_FRCTR2     (0xC6)  //Frame Rate Control in Normal Mode
+//#define ST7789_PWCTRL1    (0xD0)   //Power Control 1
+//#define ST7789_PVGAMCTRL  (0xE0)
+//#define ST7789_NVGAMCTRL  (0xE1)
+//// **************************************************
+
+
 // ********************************************************
 // Defines for the ST7789 registers.
 // ref: https://www.crystalfontz.com/products/document/3277/ST7735_V2.1_20100505.pdf
-#define ST7789_SLPIN      (0x10)
-#define ST7789_SLPOUT     (0x11)
-#define ST7789_INVOFF     (0x20)
-#define ST7789_INVON      (0x21)
-#define ST7789_DISPOFF    (0x28)
-#define ST7789_DISPON     (0x29)
-#define ST7789_CASET      (0x2A)
-#define ST7789_RASET      (0x2B)
-#define ST7789_RAMWR      (0x2C)
-#define ST7789_MADCTL     (0x36)
-#define ST7789_COLMOD     (0x3A)
-#define ST7789_PORCTRL    (0xB2)
-#define ST7789_GCTRL      (0xB7)
-#define ST7789_VCOMS      (0xBB)
+// ********************************************************
+#define ST7789_01_SWRESET (0x01)  //SW_RESET
+#define ST7789_SLPIN      (0x10)  //Sleep in
+#define ST7789_SLPOUT     (0x11)  //Sleep Out
+#define ST7789_INVOFF     (0x20)  //Display Inversion Off
+#define ST7789_INVON      (0x21)  //Display Inversion On
+#define ST7789_DISPOFF    (0x28)  //Display Off
+#define ST7789_DISPON     (0x29)  //Display On
+#define ST7789_CASET      (0x2A)  //Column Address Set
+#define ST7789_RASET      (0x2B)  //Row Address Set
+#define ST7789_RAMWR      (0x2C)  //Memory Write
+#define ST7789_TEOFF      (0x34)  //Tearing Effect Line OFF
+#define ST7789_TEON       (0x35)  //Tearing Effect Line On
+#define ST7789_MADCTL     (0x36)  //Memory Data Access Control
+#define ST7789_COLMOD     (0x3A)  //Interface Pixel Format
+#define ST7789_STE        (0x44)  //Set Tear Scanline
+#define ST7789_WRDISBV    (0x51)  //Write Display Brightness
+#define ST7789_WRCTRLD    (0x53)  //Write CTRL Display
+#define ST7789_WRCACE     (0x55)  //Write Content Adaptive Brightness Control and Color Enhancement
+#define ST7789_WRCABCMB   (0x5E)  //Write CABC minimum brightness
+#define ST7789_PORCTRL    (0xB2)  //Porch control
+#define ST7789_GCTRL      (0xB7)  //Gate Control
+#define ST7789_VCOMS      (0xBB)  //Gate on timing adjustment
 #define ST7789_LCMCTRL    (0xC0)  //LCM Control
 #define ST7789_VDVVRHEN   (0xC2)  //VDV and VRH Command Enable
 #define ST7789_VRHS       (0xC3)  //VRH Set
 #define ST7789_VDVSET     (0xC4)  //VDV Set
 #define ST7789_FRCTR2     (0xC6)  //Frame Rate Control in Normal Mode
-#define ST7789_PWCTRL1    (0xD0)   //Power Control 1
-#define ST7789_PVGAMCTRL  (0xE0)
-#define ST7789_NVGAMCTRL  (0xE1)
-// **************************************************
+#define ST7789_CABCCTRL   (0xC7)  //CABC Control
+#define ST7789_PWCTRL1    (0xD0)  //Power Control 1
+#define ST7789_PVGAMCTRL  (0xE0)  //Positive Voltage Gamma Control
+#define ST7789_NVGAMCTRL  (0xE1)  //Negative Voltage Gamma Control
+
+// ********************************************************
 void displayInit(void)
 {
   //Reset the LCD controller
   CLR_RESET;
   delay(1);//10µS min
   SET_RESET;
-  delay(150);//120mS max
+  delay(350);//120mS max
 
-  //SLPOUT (11h): Sleep Out ("Sleep Out"  is chingrish for "wake")
+  //SLPOUT (11h): Sleep Out 
   //The DC/DC converter is enabled, Internal display oscillator
   //is started, and panel scanning is started.
   SPI_sendCommand(ST7789_SLPOUT);
   delay(120);
+  SPI_sendCommand(ST7789_SLPIN);	// Sleep In (Low power mode)
 
   //-----------------------------Display setting--------------------------------
   SPI_sendCommand(ST7789_MADCTL); //Page 215
   //SPI_sendData(0x00); //DEFAULT
-  //SPI_sendData(0x48); //TEST
-  SPI_sendData(0x40);
+  SPI_sendData(0x48); //BGR
+  //SPI_sendData(0x40); //RGB
   
   // Bit D7- Page Address Order
   // “0” = Top to Bottom (When MADCTL D7=”0”).
@@ -158,6 +198,100 @@ void displayInit(void)
   SPI_sendData(0x2F);
   SPI_sendData(0x31);
 
+
+  // //Disable Tearing
+  //writeCommand(ST7789_TEOFF);
+
+  //Enable Tearing
+  // writeCommand(ST7789_TEON);
+  // writeData(0x00); // ON
+  // When TEM =’0’: The Tearing Effect output line consists of V-Blanking information only
+  // When TEM =’1’: The Tearing Effect output Line consists of both V-Blanking and H-Blanking information
+
+  //CABC Setup
+  //Write Display Brightness
+  writeCommand(ST7789_WRDISBV); //Defaults to 0000h
+  writeData(0xFF); // 8 bit display brightness 0x00 = lowest, 0xFF = highest
+
+  //Write CTRL Display
+  writeCommand(ST7789_WRCTRLD);
+
+  // BCTRL: Brightness Control Block On/Off, This bit is always used to switch brightness for display.
+  // 0 = Off (Brightness register are 00h, DBV[7:0])
+  // 1 = On (Brightness register are active, according to the other parameters.)
+#define BCTRL 0
+
+// DD: Display Dimming (Only for manual brightness setting)
+// DD = 0: Display Dimming is off.
+// DD = 1: Display Dimming is on.
+#define DD    0
+
+// BL: Backlight Control On/Off
+// 0 = Off (Completely turn off backlight circuit. Control lines must be low.)
+// 1 = On
+#define BL    0
+
+  writeData((BCTRL << 5) | (DD << 3) | (BL << 2));
+
+  //Content Adaptive Brightness controller
+  writeCommand(ST7789_CABCCTRL); //Defaults to 0x00
+
+  // LEDONREV: Reverse the status of LED_ON:
+  // “0”: keep the status of LED_ON.
+  // “1”: reverse the status of LED_ON.
+#define LEDONREV 0
+
+// DPOFPWM: initial state control of LEDPWM.
+// “0”: The initial state of LEDPWM is low.
+// “1”: The initial state of LEDPWM is high.
+#define DPOFPWM  0
+
+// PWMFIX: LEDPWM fix control.
+// “0”: LEDPWM control by CABC.
+// “1”: fix LEDPWM in “ON” status.
+#define PWMFIX   0
+
+// PWMPOL: LEDPWM polarity control.
+// “0”: polarity high.
+// “1”: polarity low.
+#define PWMPOL   0
+
+  writeData((LEDONREV << 3) | (DPOFPWM << 2) | (PWMFIX << 1) | (PWMPOL << 0));
+
+  writeCommand(ST7789_WRCACE); //Defaults to 0x00
+  
+  // CECTRL: Color Enhancement Control Bit:
+  // CECTRL=0: Color Enhancement Off.
+  // CECTRL=1: Color Enhancement On.
+#define CECTRL 1
+
+// |CE1 | CE0 | Color enhancement level
+// ------------------------------------
+// | 0  | 0   | Low enhancement
+// | 0  | 1   | Medium enhancement
+// | 1  | 1   | High enhancement
+// ------------------------------------
+#define CE1 1
+#define CE0 1
+
+// | C1 | C0 | Function
+// ---------------------------------
+// | 0  | 0  | Off
+// | 0  | 1  | User Interface Mode
+// | 1  | 0  | Still Picture
+// | 1  | 1  | Moving Image
+// ---------------------------------
+#define C1 1
+#define C0 1
+
+  writeData((CECTRL << 7) | (CE1 << 5) | (CE0 << 4) | (C1 << 1) | (C0 << 0));
+
+  //
+  writeCommand(ST7789_WRCABCMB); //Defaults to 0x00
+  //  - This command is used to set the minimum brightness value of the display for CABC function.
+  //  -In principle relationship is that 00h value means the lowest brightness for CABC and FFh value means the brightness for CABC  
+  writeData(0x00);
+
   setDisplayWindow(0, 0, 239, 239);
   //--------------------
 	exitSleep();
@@ -193,6 +327,21 @@ void fillScreen(uint32_t color)
 			writeColor(color);
 		}
 	}
+}
+// ********************************************************
+void fillScreen(color_t color)
+{
+  unsigned int i, j;
+
+
+  setDisplayWindow(0, 0, 240, 240);
+  for (i = 0; i < 240; i++)
+  {
+    for (j = 0; j < 240; j++)
+    {
+      writeColor(color);
+    }
+  }
 }
 //============================================================================
 // void Set_LCD_for_write_at_X_Y(uint8_t x, uint8_t y)
@@ -309,6 +458,39 @@ void writeColor(uint32_t color)
   SPI.transfer(color >> 16);
   SPI.transfer(color >>  8);
   SPI.transfer(color >>  0);
+  // Deselect the LCD controller
+  SET_CS;
+
+}
+// **************************************************
+void writeColor(color_t color)
+{
+  // #ifdef MCU16BIT	
+  // 	SET_CD;
+  // 	PORTE=color>>8;
+  // 	PORTA=color;
+  // 	CLR_WR;
+  // 	SET_WR;
+  // #endif
+  // #ifdef MCU8BIT
+  // 	SET_CD;
+  //  	CLR_WR;
+  //  	PORTE=color>>8;
+  //  	SET_WR;
+  // 	PORTE=color;
+  // 	CLR_WR;
+  // 	SET_WR;
+  // #endif
+
+
+    // Select the LCD controller
+  CLR_CS;
+  // Select the LCD's data register
+  SET_RS;
+  //Send the command via SPI:
+  SPI.transfer(color.r);
+  SPI.transfer(color.g);
+  SPI.transfer(color.b);
   // Deselect the LCD controller
   SET_CS;
 }

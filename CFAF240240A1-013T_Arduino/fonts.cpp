@@ -1,6 +1,6 @@
 #include "fonts.h"
 #include "st7789h2.h"
-#include "atsamd21g18.h"
+//#include "atsamd21g18.h"
 
 font_t font; // = &f_08x08;
   
@@ -68,7 +68,9 @@ void LCD_Character(uint8_t x0, uint8_t y0, uint8_t c)
               && (y < (top_rows_blank + font.font_set->fc[c].rows_high)))
       {
         //Now get the bitmap data and shove it out.
-        line_data = *bitmap_data++;
+        //line_data = *bitmap_data++;
+        line_data = pgm_read_byte(bitmap_data);
+        *bitmap_data++;
         mask = 0x80;
         //If it is a two-byte character, get the second byte
         //of bitmap data.
@@ -81,7 +83,7 @@ void LCD_Character(uint8_t x0, uint8_t y0, uint8_t c)
         for (x = 0; x < cols_wide; x++, mask >>= 1)
           if (line_data & mask)
             Put_Pixel(x0 + x + left_cols_blank, y0 - y,
-                    font.foreground);
+                    font.foreground.r, font.foreground.g, font.foreground.b);
       }
     }
   }
@@ -108,7 +110,7 @@ void LCD_Character(uint8_t x0, uint8_t y0, uint8_t c)
         {
           //Background
           //Write the single pixel's worth of data
-          Put_Pixel(x0 + x, y0 - y, font.background);
+          Put_Pixel(x0 + x, y0 - y, font.background.r, font.background.g, font.background.b);
         }
       }
       else
@@ -119,10 +121,11 @@ void LCD_Character(uint8_t x0, uint8_t y0, uint8_t c)
         {
           //Background
           //Write the single pixel's worth of data
-          Put_Pixel(x0 + x, y0 - y, font.background);
+          Put_Pixel(x0 + x, y0 - y, font.background.r, font.background.g, font.background.b);
         }
         //Now get the bitmap data and shove it out.
-        line_data = *bitmap_data++;
+        line_data = pgm_read_byte(bitmap_data);
+        *bitmap_data++;
         mask = 0x80;
         //If it is a two-byte character, get the second byte
         //of bitmap data.
@@ -139,13 +142,13 @@ void LCD_Character(uint8_t x0, uint8_t y0, uint8_t c)
           {
             //Foreground
             //Write the single pixel's worth of data
-            Put_Pixel(x0 + x, y0 - y, font.foreground);
+            Put_Pixel(x0 + x, y0 - y, font.foreground.r, font.foreground.g, font.foreground.b);
           }
           else
           {
             //Background
             //Write the single pixel's worth of data
-            Put_Pixel(x0 + x, y0 - y, font.background);
+            Put_Pixel(x0 + x, y0 - y, font.background.r, font.background.g, font.background.b);
           }
         }
         //Push out the trailing blank columns
@@ -154,7 +157,7 @@ void LCD_Character(uint8_t x0, uint8_t y0, uint8_t c)
         {
           //Background
           //Write the single pixel's worth of data
-          Put_Pixel(x0 + x, y0 - y, font.background);
+          Put_Pixel(x0 + x, y0 - y, font.background.r, font.background.g, font.background.b);
         }
 
       }

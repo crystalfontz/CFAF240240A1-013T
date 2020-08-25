@@ -107,7 +107,7 @@ const FONT_CHARACTER fc_08x08[95] =
   };
 
 //Character bitmap data array, with decoding in comments.
-const uint8_t fd_08x08[576] =
+const uint8_t fd_08x08[576] PROGMEM =
   {
     //index=    0=0x0000 ' ' 32=0x20: siz=(  0,  0) ofs=(  0,  7)
                //                |��������|

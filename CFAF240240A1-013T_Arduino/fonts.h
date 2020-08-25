@@ -4,7 +4,9 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <avr/io.h>
-#include "atsamd21g18.h"
+//#include "atsamd21g18.h"
+#include "atmega328.h"
+#include "st7789h2.h"
 
 //Header file information for font structure definitions.
 #if 1

@@ -4,31 +4,20 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <avr/io.h>
-// #include <avr/interrupt.h>
-// #include <avr/pgmspace.h>
-//#include "MMC_SD.h"
 
 extern uint16_t SectorsPerClust;
 extern uint16_t FirstDataSector;
 extern uint8_t FAT32_Enable;
 
-class pixel_t
-{
-  public:
-    uint8_t r, g, b;
-};
 
-// struct FileInfoStruct FileInfo;
-// struct direntry PictureInfo;
 
 //============================================================================
 //
 // LCD SPI & control lines
 //   ARD   | Port | LCD                      | Wire
 // --------+------+--------------------------+------------
-//  #4/D4  |  PD4 | LCD_EN                   |
 //  #4/D5  |  PD5 | TE (Input)               |
-//  #4/D6  |  PD6 | IM3                      |
+//  #4/D6  |  PD6 | BL_EN                    |
 //  #7/D7  |  PD7 | SD_CS                    | Grey   
 // --------+------+--------------------------+------------
 //  #8/D8  |  PB0 | LCD_RS                   | Yellow
@@ -74,13 +63,13 @@ class pixel_t
 
 //============================================================================
 
-// #define LCD_BL  PC0	//Backlight pin for funsies, I mean testing
+// #define LCD_BL  PC0	//Backlight pin for testing
 // #define BL_OFF PORTC &= ~(1<<LCD_BL);
 // #define BL_ON  PORTC |=  (1<<LCD_BL);
 
 //extern void clearScreen(void);
 
-//void delay(uint16_t t);
+void hostInit(void);
 void pictureSlideShow();
 void writeCommand(uint8_t command);
 void writeData(uint8_t data);

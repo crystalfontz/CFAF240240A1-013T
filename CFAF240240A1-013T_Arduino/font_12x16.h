@@ -8,7 +8,7 @@
 // straight=95*2*16=3040 (would not include proportional data)
 
 //Character metric data, and pointers into the bitmap data array
-const FONT_CHARACTER fc_12x16[95] =
+const FONT_CHARACTER fc_12x16[95] PROGMEM =
   { //array of FONT_CHARACTER structures
     {  5,  0,  0, 14,    0},  //' ' 32=0x20: siz=(  0,  0) ofs=(  0, 14) (manual edit with for proportional)
     {  4, 14,  4,  0,    0},  //'!' 33=0x21: siz=(  4, 14) ofs=(  4,  0)

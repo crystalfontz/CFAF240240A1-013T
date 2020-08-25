@@ -2,6 +2,33 @@
 #include "st7789h2.h"
 #include "atmega328.h"
 
+/*******************************************************************************
+ * \brief Initialize the microprocessor
+ * 
+ * Readies the micro to write to a display.
+ ******************************************************************************/
+void hostInit(void)
+{
+  //Set up port B as ALL inputs
+  pinMode(3, OUTPUT);   //LCD_EN
+  //pinMode(5, INPUT);   //LCD_TE
+  pinMode(6, OUTPUT);   //LCD_IM3
+  pinMode(7, OUTPUT);   //uSD_CS
+  
+  //CLR_IM3; //SDI/SDO share MISO
+  SET_IM3;  //SDI/SDO on different pins
+
+  pinMode(8, OUTPUT);   //LCD_RS
+  pinMode(9, OUTPUT);   //LCD_RESET
+  pinMode(10, OUTPUT);  //LCD_CS
+  
+  //Drive the ports to a reasonable starting state.
+  CLR_RESET;  //Active low
+  SET_CS;     //Active low
+  CLR_RS;
+  CLR_MOSI;
+  CLR_SCK;
+}
 // **************************************************
 void show_BMPs_in_root(void)
 {
@@ -35,7 +62,7 @@ void show_BMPs_in_root(void)
         {
           //The BMP must be exactly 172854 long
           //(this is correct for 240x240, 24-bit + 54)
-          if(172854 == bmp_file.size())
+          if(172844 < bmp_file.size() < 172864)
           {
             Serial.print("Displaying ");
             Serial.println(bmp_file.name());
@@ -169,7 +196,7 @@ void pictureSlideShow()
 // optimized to do index operations during SPI transfers.
 void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
 {
-  pixel_t pixel;
+  color_t pixel;
 
   // Select the LCD's data register
   SET_RS;
@@ -179,13 +206,12 @@ void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
   while(byte_count)
   {
     //Load the byte
-    pixel.b=*data_ptr++;
-    pixel.g=*data_ptr++;
     pixel.r=*data_ptr++;
+    pixel.g=*data_ptr++;
+    pixel.b=*data_ptr++;
     
     //Send the R byte out.
     SPDR = pixel.r;
-
     //count this byte
     byte_count--;
     //Now that we have done all we can do, wait for the transfer to finish.
@@ -193,7 +219,6 @@ void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
 
     //Send the G out.
     SPDR = pixel.g;
-
     //count this byte
     byte_count--;
     //Now that we have done all we can do, wait for the transfer to finish.
@@ -201,7 +226,6 @@ void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
     
     //Send the B out.
     SPDR = pixel.b;
-
     //count this byte
     byte_count--;
     //Now that we have done all we can do, wait for the transfer to finish.
@@ -216,7 +240,7 @@ void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
 
 void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
   {
-  pixel_t pixel;
+  color_t pixel;
   uint8_t first_half, second_half;
 
   // Select the OLED's data register
@@ -280,10 +304,10 @@ void reset_display(void)
 //================================================================================
 void writeCommand(uint8_t command)
 {
-	// Select the LCD's command register
-	CLR_RS;
 	// Select the LCD controller
 	CLR_CS;
+	// Select the LCD's command register
+	CLR_RS;
 
 	//Send the command via SPI:
 	SPI.transfer(command);
@@ -293,10 +317,10 @@ void writeCommand(uint8_t command)
 //================================================================================
 void writeData(uint8_t data)
 {
-	//Select the LCD's data register
-	SET_RS;
 	//Select the LCD controller
 	CLR_CS;
+	//Select the LCD's data register
+	SET_RS;
 	//Send the command via SPI:
 	SPI.transfer(data);
 
