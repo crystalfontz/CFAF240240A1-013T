@@ -1,7 +1,0 @@
-{
-    "port": "COM82",
-    "board": "adafruit:samd:adafruit_feather_m0",
-    "build": "../../Build",
-    "output": "../../Build",
-    "sketch": "CFAF240240A1-013T_Adalogger.ino"
-}
