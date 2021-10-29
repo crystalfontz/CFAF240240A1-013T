@@ -11,27 +11,27 @@ void hostInit(void)
 {
   //Set up port B as ALL inputs
   pinMode(3, OUTPUT);   //LCD_EN
-  //pinMode(5, INPUT);   //LCD_TE
   pinMode(6, OUTPUT);   //LCD_IM3
   pinMode(7, OUTPUT);   //uSD_CS
   
-  //CLR_IM3; //SDI/SDO share MISO
-  SET_IM3;  //SDI/SDO on different pins
 
-  pinMode(8, OUTPUT);   //LCD_RS
+  pinMode(8, OUTPUT);   //LCD_DC
   pinMode(9, OUTPUT);   //LCD_RESET
   pinMode(10, OUTPUT);  //LCD_CS
   
   //Drive the ports to a reasonable starting state.
   CLR_RESET;  //Active low
   SET_CS;     //Active low
-  CLR_RS;
+  CLR_DC;
   CLR_MOSI;
   CLR_SCK;
 }
 // **************************************************
 void show_BMPs_in_root(void)
 {
+//this routine will show images stored on an SD card
+// images must be bmps that are exactly 172854 bits
+  
   Serial.println("Showing BMPs from uSD Card");
 
   File root_dir;
@@ -199,7 +199,7 @@ void SPI_send_pixels_666(uint8_t byte_count, uint8_t *data_ptr)
   color_t pixel;
 
   // Select the LCD's data register
-  SET_RS;
+  SET_DC;
   // Select the LCD controller
   CLR_CS;
 
@@ -244,7 +244,7 @@ void SPI_send_pixels_565(uint8_t pixel_count, uint8_t *data_ptr)
   uint8_t first_half, second_half;
 
   // Select the OLED's data register
-  SET_RS;
+  SET_DC;
   // Select the OLED controller
   CLR_CS;
 
@@ -307,7 +307,7 @@ void writeCommand(uint8_t command)
 	// Select the LCD controller
 	CLR_CS;
 	// Select the LCD's command register
-	CLR_RS;
+	CLR_DC;
 
 	//Send the command via SPI:
 	SPI.transfer(command);
@@ -320,7 +320,7 @@ void writeData(uint8_t data)
 	//Select the LCD controller
 	CLR_CS;
 	//Select the LCD's data register
-	SET_RS;
+	SET_DC;
 	//Send the command via SPI:
 	SPI.transfer(data);
 

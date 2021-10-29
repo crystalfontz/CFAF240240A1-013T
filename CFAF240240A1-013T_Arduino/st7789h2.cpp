@@ -453,7 +453,7 @@ void writeColor(uint32_t color)
   // Select the LCD controller
   CLR_CS;
   // Select the LCD's data register
-  SET_RS;
+  SET_DC;
   //Send the command via SPI:
   SPI.transfer(color >> 16);
   SPI.transfer(color >>  8);
@@ -486,7 +486,7 @@ void writeColor(color_t color)
     // Select the LCD controller
   CLR_CS;
   // Select the LCD's data register
-  SET_RS;
+  SET_DC;
   //Send the command via SPI:
   SPI.transfer(color.r);
   SPI.transfer(color.g);
@@ -564,7 +564,7 @@ void Fast_Horizontal_Line(uint16_t x0, uint16_t y, uint16_t x1,
   // Select the OLED controller
   CLR_CS;
   // Select the OLED's data register
-  SET_RS;
+  SET_DC;
 
   while(x0 <= x1)
   {
@@ -725,7 +725,7 @@ void SPI_sendCommand(uint8_t command)
   // Select the LCD controller
   CLR_CS;
   // Select the LCD's command register
-  CLR_RS;
+  CLR_DC;
   //Send the command via SPI:
   SPI.transfer(command);
   // Deselect the LCD controller
@@ -737,7 +737,7 @@ void SPI_sendData(uint8_t data)
   // Select the LCD controller
   CLR_CS;
   // Select the LCD's data register
-  SET_RS;
+  SET_DC;
   //Send the command via SPI:
   SPI.transfer(data);
   // Deselect the LCD controller

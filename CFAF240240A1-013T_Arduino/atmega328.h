@@ -17,39 +17,41 @@ extern uint8_t FAT32_Enable;
 //   ARD   | Port | LCD                      | Wire
 // --------+------+--------------------------+------------
 //  #4/D5  |  PD5 | TE (Input)               |
-//  #4/D6  |  PD6 | BL_EN                    |
+//  #6/D6  |  PD6 | BL_EN                    | Brown
 //  #7/D7  |  PD7 | SD_CS                    | Grey   
 // --------+------+--------------------------+------------
-//  #8/D8  |  PB0 | LCD_RS                   | Yellow
+//  #8/D8  |  PB0 | LCD_DC                   | Yellow
 //  #9/D9  |  PB1 | LCD_RESET                | Purple
 // #10/D10 |  PB2 | LCD_CS_NOT (or SPI SS)   | Grey
 // #11/D11 |  PB3 | LCD_MOSI (hardware SPI)  | Green 
 // #12/D12 |  PB4 | not used (would be MISO) | Blue
 // #13/D13 |  PB5 | LCD_SCK (hardware SPI)   | White
-// ----+--------+-----
-//#define LCD_EN    0x08
-//#define LCD_TE    0x20  
+// --------+------+--------------------------+------------
+//
+//The CFA10107 breakout board is now available for this display.
+//To connect using the breakout board, follow pinout above
+//LCD_MOSI is labeled as SDA on the board
+//MISO is labeled as SDO on the board
+// https://www.crystalfontz.com/product/cfaf240240a1013te11
+
 #define LCD_IM3   0x40  
 #define uSD_CS    0x80 // Pin 7
 // ----+--------+-----
-#define LCD_RS    0x01
+#define LCD_DC    0x01
 #define	LCD_RESET	0x02
 #define	LCD_CS	  0x04
 #define LCD_MOSI  0x08
 #define LCD_MISO  0x10
 #define LCD_SCK   0x20
 // ----+--------+-----
-// #define CLR_EN    (PORTD &= ~(LCD_EN))
-// #define SET_EN    (PORTD |=  (LCD_EN))
-// #define CLR_TE    (PORTD &= ~(LCD_TE))
-// #define SET_TE    (PORTD |=  (LCD_TE))
+
 #define CLR_IM3   (PORTD &= ~(LCD_IM3))
 #define SET_IM3   (PORTD |=  (LCD_IM3))
 #define CLR_uCS   (PORTD &= ~(uSD_CS))
 #define SET_uCS   (PORTD |=  (uSD_CS))
 // ----+--------+-----
-#define CLR_RS    (PORTB &= ~(LCD_RS))
-#define SET_RS    (PORTB |=  (LCD_RS))
+#define CLR_DC    (PORTB &= ~(LCD_DC))
+#define SET_DC    (PORTB |=  (LCD_DC))
 #define CLR_RESET (PORTB &= ~(LCD_RESET))
 #define SET_RESET (PORTB |=  (LCD_RESET))
 #define CLR_CS    (PORTB &= ~(LCD_CS))
@@ -62,12 +64,6 @@ extern uint8_t FAT32_Enable;
 #define SET_SCK   (PORTB |=  (LCD_SCK))
 
 //============================================================================
-
-// #define LCD_BL  PC0	//Backlight pin for testing
-// #define BL_OFF PORTC &= ~(1<<LCD_BL);
-// #define BL_ON  PORTC |=  (1<<LCD_BL);
-
-//extern void clearScreen(void);
 
 void hostInit(void);
 void pictureSlideShow();

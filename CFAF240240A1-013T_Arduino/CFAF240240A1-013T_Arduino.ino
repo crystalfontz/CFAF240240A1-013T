@@ -4,6 +4,7 @@
 //
 //  CRYSTALFONTZ CFAF240240A1-013T 240X240 SPI COLOR 1.3" TFT
 //  ref: https://www.crystalfontz.com/product/cfaf240240a1013t
+//  w/breakout board: https://www.crystalfontz.com/product/cfaf240240a1013te11
 //
 //  This code uses 4-wire SPI mode.
 //
@@ -72,6 +73,7 @@ void setup()
 
   hostInit();
 
+//control brightness of backlight on pin 6
   uint8_t brightness = 250;
   uint8_t ledPin = 6;
   pinMode(ledPin, OUTPUT);
@@ -113,8 +115,6 @@ void setup()
 
   //Initialize the LCD controller
   displayInit();
-  pinMode(6, OUTPUT);
-  analogWrite(6, 245);
   
 }
 //============================================================================
@@ -122,7 +122,7 @@ void setup()
 #define colorbar_demo       1
 #define gammagradient_demo  1
 #define circle_demo         0
-#define font_demo           0 //This demo is too large for a atmega328. edit: fixed to get small fonts to fit
+#define font_demo           0 
 #define bmp_demo            0
 
 void loop()
@@ -133,7 +133,7 @@ void loop()
   //SPI_sendData(0x2c);
 
   Serial.println("--> Top of the Loop <--");
-
+//==================================================
 #if(fullscreen_demo)
   Serial.println("Writing a white screen");
   fillScreen(WHITE);
@@ -152,11 +152,10 @@ void loop()
   delay(500);
 #endif
 
-
+//==================================================
 #if(colorbar_demo)
   writeColorBars(240, 240);
   delay(1000);
-
 #endif
 
 #if(gammagradient_demo)
@@ -164,14 +163,7 @@ void loop()
   delay(1000);
 #endif
 
-  ////turn backlight off
-  //SPI_sendCommand(0x53);
-  //SPI_sendData(0x28);
-  //delay(2000);
-  //  //turn backlight on
-  //SPI_sendCommand(0x53);
-  //SPI_sendData(0x2c);
-
+//==================================================
 #if(circle_demo)  // Enable to demonstrate basic tests
 
   Serial.println("Writing a black screen");
@@ -204,30 +196,17 @@ void loop()
   delay(1000);
 #endif
 
-
-
-
-
+//==================================================
 #if(font_demo)  // Enable to demonstrate writing fonts to the screen
-  //font.reset();
-  //font.font_set = &f_12x16;
-  //font.background = BLACK;
-  //Serial.println("Writing 12x16");
-  //LCD_Character(12+(12*0),223,'B');
-  //LCD_Character(12+(12*1),223,'i');
-  //LCD_Character(12+(12*2),223,'g');
-
-  //font.transparent = true;
-  //LCD_String(12, 206, "Big Font");
-
   Serial.println("Writing 08x08");
+  fillScreen(BLACK);
   font.reset();
   font.font_set = &f_08x08;
   font.background = GREEN;
   LCD_String(152, 1, "Little Font");
-  // LCD_Character(120,160,'A');
-  // LCD_Character(120+8,160,'!');
-  // LCD_Character(120+8+8,160,'C');
+  LCD_Character(120,160,'A');
+  LCD_Character(120+8,160,'!');
+  LCD_Character(120+8+8,160,'C');
 
   // LCD_String(40, 40, "Test String Little");
 
@@ -248,7 +227,7 @@ void loop()
   //font.font_set = &f_12x16;
   //font.background = BLUE;
   //font.transparent = true;
-  for(uint8_t y=0;y<=75;y++)
+  for(uint8_t y=0;y<=300;y++)
   {
     #if(0)
     LCD_Character(63+(12*0), y+(16*2), '2');
@@ -272,11 +251,10 @@ void loop()
     LCD_String(63+(12*0), y+(16*2), "21000");
     LCD_String(63+(12*0), y+(16*1), "22000");
     LCD_String(63+(12*0), y+(16*0), "23000");
-    #endif
+    #endif 
   }
-
 #endif
-
+//==================================================
 #if(bmp_demo)
   show_BMPs_in_root();
   delay(1000);
